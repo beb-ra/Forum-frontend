@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Forum Frontend</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .profile-btn {
+            background: #e7f3ff;
+            border: 1px solid #b6d8ff;
+            color: #0056b3;
+            border-radius: 50%;
+            width: 42px; height: 42px;
+            padding: 0;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-btn:hover { background: #d0e6ff; }
+
+        h1 { color: #333; }
+        h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 18px; }
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .section.hidden { display: none; }
+        input, textarea, select, button { padding: 8px; margin: 5px 0; font-size: 14px; }
+        input, textarea, select { width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 10px 20px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; color: #fff; }
+        button.danger:hover { background: #b02a37; }
+        button.logout { background: #6c757d; color: #fff; }
+        button.logout:hover { background: #5a6268; }
+        button.success { background: #28a745; color: #fff; }
+        button.success:hover { background: #1e7e34; }
+
+        .post { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 6px; background: #f9f9f9; }
+        .post h3 { margin: 0 0 5px 0; }
+        .post-title-link { color: #0056b3; text-decoration: none; }
+        .post-title-link:hover { text-decoration: underline; }
+        .post-meta { color: #666; font-size: 12px; }
+        .author-link { color: #0056b3; text-decoration: none; }
+        .author-link:hover { text-decoration: underline; }
+        .error { color: #dc3545; margin: 10px 0; }
+        .success { color: #28a745; margin: 10px 0; }
+        .user-info { background: #e7f3ff; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; }
+        .layout { display: flex; gap: 20px; align-items: flex-start; }
+        .sidebar {
+            width: 200px; flex-shrink: 0;
+            border: 1px solid #ddd; border-radius: 8px;
+            padding: 10px; background: #fafafa;
+        }
+        .sidebar h2 { font-size: 16px; margin: 0 0 8px 0; }
+        #subforumsList { list-style: none; margin: 0; padding: 0; }
+        .subforum-item {
+            padding: 6px 8px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; margin-bottom: 2px; word-break: break-word;
+        }
+        .subforum-item:hover { background: #e9f2ff; }
+        .subforum-item.active { background: #007bff; color: #fff; }
+        .content { flex: 1; min-width: 0; }
+        #createPostToggle:hover { color: #007bff; }
+
+        #createSubforumBlock {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        #createSubforumBlock input,
+        #createSubforumBlock textarea,
+        #createSubforumBlock button {
+            font-size: 13px;
+            padding: 6px 8px;
+            margin: 3px 0;
+        }
+        #createSubforumBlock button { width: 100%; }
+
+        .comment {
+            border-left: 3px solid #ddd;
+            padding: 8px 12px; margin: 8px 0;
+            background: #fafafa; border-radius: 4px;
+        }
+        .comment.deleted {
+            background: #f3f3f3;
+            border-left-color: #bbb;
+            color: #888;
+        }
+        .comment-meta { color: #666; font-size: 12px; margin-bottom: 4px; }
+        .comment.deleted .comment-meta { color: #999; }
+        .no-comments { color: #888; font-style: italic; padding: 10px 0; }
+
+        .reply-indicator {
+            display: inline-block;
+            background: #eef4ff;
+            color: #355f99;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .vote-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+        button.vote-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            margin: 0;
+            border-radius: 4px;
+            line-height: 1;
+            opacity: 0.45;
+            transition: opacity 0.15s, background 0.15s;
+            color: #333;
+        }
+        button.vote-btn:hover { opacity: 1; background: #eef4ff; }
+        button.vote-btn.active-up { opacity: 1; background: #d4edda; }
+        button.vote-btn.active-down { opacity: 1; background: #f8d7da; }
+        .vote-score {
+            font-size: 12px;
+            color: #666;
+            min-width: 20px;
+            text-align: center;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+        .vote-score.positive { color: #28a745; }
+        .vote-score.negative { color: #dc3545; }
+
+        .profile-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .profile-card .profile-row { margin: 10px 0; font-size: 15px; }
+        .profile-card .profile-row strong {
+            color: #555; display: inline-block; min-width: 160px;
+        }
+
+        .mod-panel {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px dashed #bbb;
+            border-radius: 6px;
+            background: #fffdf5;
+        }
+        .mod-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #856404;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .mod-panel .row-buttons {
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+        .mod-panel select {
+            width: auto; min-width: 180px; margin: 0;
+        }
+        .mod-panel button { margin: 0; padding: 8px 14px; }
+
+        .comment-del-btn {
+            padding: 2px 8px !important;
+            font-size: 11px !important;
+            margin: 0 0 0 8px !important;
+            border-radius: 3px;
+            color: #fff;
+        }
+        .reply-btn {
+            background: #17a2b8 !important;
+        }
+        .reply-btn:hover {
+            background: #117a8b !important;
+        }
+
+        .inline-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #212529;
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .profile-header h2 { margin: 0; border: none; padding: 0; }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .form-actions button {
+            flex: 0 0 auto;
+            min-width: 130px;
+            margin: 0;
+            padding: 10px 20px;
+        }
+
+        .reply-form {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #ddd;
+        }
+        .reply-form textarea {
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .profile-header { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <h1>Forum Frontend</h1>
+        <button class="profile-btn" title="Профиль" onclick="openOwnProfile()">👤</button>
+    </div>
+
+    <div id="message"></div>
+
+    <!-- Логин -->
+    <div id="loginSection" class="section">
+        <h2>Вход</h2>
+        <input id="loginEmail" type="email" placeholder="Email">
+        <input id="loginPassword" type="password" placeholder="Пароль">
+        <button onclick="login()">Войти</button>
+        <button class="logout" onclick="showRegister()">Регистрация</button>
+    </div>
+
+    <!-- Регистрация -->
+    <div id="registerSection" class="section hidden">
+        <h2>Регистрация</h2>
+        <input id="regUsername" type="text" placeholder="Username">
+        <input id="regEmail" type="email" placeholder="Email">
+        <input id="regPassword" type="password" placeholder="Пароль">
+        <button onclick="register()">Зарегистрироваться</button>
+        <button class="logout" onclick="showLogin()">Назад к входу</button>
+    </div>
+
+    <!-- Форум -->
+    <div id="appSection" class="section hidden">
+        <div class="user-info">
+            <strong>Вы вошли как:</strong> <span id="currentUser"></span>
+            <span id="roleBadges"></span>
+        </div>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <h2>Подфорумы</h2>
+                <ul id="subforumsList"></ul>
+
+                <div id="createSubforumBlock" style="display: none;">
+                    <button class="success" onclick="toggleCreateSubforumForm()">Создать подфорум</button>
+                    <div id="createSubforumForm" style="display: none;">
+                        <input id="subforumName" type="text" placeholder="Название">
+                        <textarea id="subforumDesc" rows="2" placeholder="Описание (необязательно)"></textarea>
+                        <button onclick="createSubforum()">Создать</button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="content">
+                <h2 id="createPostToggle" style="cursor: pointer; user-select: none;" onclick="toggleCreatePostForm()">
+                    Создать пост <span id="createPostArrow" style="font-size: 14px; color: #888;">▼</span>
+                </h2>
+                <div id="createPostForm" style="display: none;">
+                    <label for="postSubforumId" style="font-size:14px; color:#555;">Подфорум:</label>
+                    <select id="postSubforumId"></select>
+                    <input id="postTitle" type="text" placeholder="Заголовок">
+                    <textarea id="postContent" rows="3" placeholder="Текст поста"></textarea>
+                    <button onclick="createPost()">Опубликовать</button>
+                </div>
+
+                <h2>Посты <span id="postsFilterLabel" style="font-size:13px; color:#888; font-weight:normal;"></span></h2>
+                <button onclick="loadPosts()">Обновить список</button>
+                <div id="postsList"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Страница поста -->
+    <div id="postDetailSection" class="section hidden">
+        <button class="logout" onclick="goBackToForum()" style="margin-bottom: 15px;">← Назад к форуму</button>
+
+        <div id="postDetailContent"></div>
+
+        <h2>Комментарии</h2>
+        <div id="commentFormContainer" style="display: none;">
+            <textarea id="newCommentContent" rows="3" placeholder="Ваш комментарий..."></textarea>
+            <button onclick="submitComment()">Отправить</button>
+        </div>
+        <div id="commentsList"></div>
+    </div>
+
+    <!-- Страница профиля -->
+    <div id="profileSection" class="section hidden">
+        <button class="logout" onclick="goBackToForum()" style="margin-bottom: 15px;">← Назад к форуму</button>
+
+        <div class="profile-header">
+            <h2 id="profileTitle">Профиль</h2>
+            <button id="logoutBtn" class="logout" style="display: none; margin: 0;" onclick="logout()">Выйти</button>
+        </div>
+        <div id="profileContent" class="profile-card">Загрузка...</div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5068';
+
+        // состояние
+        let subforums = [];
+        let posts = [];
+        let currentSubforumId = null;
+        let usersCache = {};
+        let tagsCache = {};
+        let tagsLoaded = false;
+        let currentPostId = null;
+        let currentPostCanModerate = false;
+        let currentPost = null;
+        let currentComments = [];
+        let votes = [];
+
+        // утилиты
+        function showMessage(text, isError = true) {
+            const el = document.getElementById('message');
+            el.className = isError ? 'error' : 'success';
+            el.textContent = text;
+            setTimeout(() => { el.textContent = ''; }, 4000);
+        }
+
+        function getToken() { return localStorage.getItem('token'); }
+        function setToken(token) { localStorage.setItem('token', token); }
+        function clearToken() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('userId');
+        }
+
+        function getCurrentUserId() {
+            const v = localStorage.getItem('userId');
+            return v != null ? parseInt(v, 10) : null;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d)) return '';
+            return d.toLocaleString('ru-RU');
+        }
+
+        // JWT и роли
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const json = decodeURIComponent(
+                    atob(base64).split('').map(c =>
+                        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                    ).join('')
+                );
+                return JSON.parse(json);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getSubforumRoles() {
+            const token = getToken();
+            if (!token) return [];
+            const payload = parseJwt(token);
+            if (!payload) return [];
+
+            let roles = payload['SubforumRole'];
+            if (!roles) return [];
+            if (typeof roles === 'string') roles = [roles];
+            return roles;
+        }
+
+        function isGlobalAdmin() {
+            return getSubforumRoles().includes('global:Admin');
+        }
+
+        function canModerateSubforum(subforumId) {
+            if (subforumId == null) return false;
+            const roles = getSubforumRoles();
+            if (roles.includes('global:Admin')) return true;
+            return roles.includes(subforumId + ':Moderator');
+        }
+
+        function renderRoleBadges() {
+            const el = document.getElementById('roleBadges');
+            if (!el) return;
+            const roles = getSubforumRoles();
+            if (roles.includes('global:Admin')) {
+                el.innerHTML = '<span class="inline-badge">Администратор</span>';
+                return;
+            }
+            const moderatorOf = roles
+                .filter(r => r.endsWith(':Moderator'))
+                .map(r => parseInt(r.split(':')[0], 10))
+                .filter(id => !isNaN(id));
+            if (moderatorOf.length > 0) {
+                const names = moderatorOf.map(id => subforumName(id) || ('#' + id));
+                el.innerHTML = '<span class="inline-badge">Модератор: ' +
+                    escapeHtml(names.join(', ')) + '</span>';
+            } else {
+                el.innerHTML = '';
+            }
+        }
+
+        // навигация
+        function openOwnProfile() {
+            const id = getCurrentUserId();
+            if (id == null) {
+                showMessage('Войдите, чтобы открыть профиль');
+                return;
+            }
+            window.location.href = '?profile=' + id;
+        }
+
+        function goBackToForum() {
+            window.location.href = window.location.pathname;
+        }
+
+        function hideAllSections() {
+            ['loginSection', 'registerSection', 'appSection', 'postDetailSection', 'profileSection']
+                .forEach(id => document.getElementById(id).className = 'section hidden');
+        }
+
+        // UI
+        function showLogin() {
+            hideAllSections();
+            document.getElementById('loginSection').className = 'section';
+        }
+
+        function showRegister() {
+            hideAllSections();
+            document.getElementById('registerSection').className = 'section';
+        }
+
+        async function showApp() {
+            hideAllSections();
+            document.getElementById('appSection').className = 'section';
+            document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
+
+            document.getElementById('createSubforumBlock').style.display =
+                isGlobalAdmin() ? 'block' : 'none';
+
+            await ensureTagsLoaded();
+            await loadSubforums();
+            await loadVotes();
+            renderRoleBadges();
+            await loadPosts();
+        }
+
+        function showPostDetailSection() {
+            hideAllSections();
+            document.getElementById('postDetailSection').className = 'section';
+        }
+
+        function showProfileSection() {
+            hideAllSections();
+            document.getElementById('profileSection').className = 'section';
+        }
+
+        function toggleCreatePostForm() {
+            const form = document.getElementById('createPostForm');
+            const arrow = document.getElementById('createPostArrow');
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                arrow.textContent = '▲';
+            } else {
+                form.style.display = 'none';
+                arrow.textContent = '▼';
+            }
+        }
+
+        function toggleCreateSubforumForm() {
+            const form = document.getElementById('createSubforumForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // голоса
+        async function loadVotes() {
+            try {
+                const res = await fetch(`${API_URL}/api/votes`);
+                if (!res.ok) return;
+                votes = await res.json();
+            } catch (e) { }
+        }
+
+        function getMyVote(type, id) {
+            const uid = getCurrentUserId();
+            if (uid == null) return 0;
+            const vote = votes.find(v => v.userId === uid &&
+                (type === 'post' ? v.postId === id : v.commentId === id));
+            return vote ? vote.voteType : 0;
+        }
+
+        function computeScore(type, id) {
+            let score = 0;
+            votes.forEach(v => {
+                if (type === 'post' && v.postId === id) score += v.voteType;
+                if (type === 'comment' && v.commentId === id) score += v.voteType;
+            });
+            return score;
+        }
+
+        function updateVoteUI(type, id, score) {
+            const myVote = getMyVote(type, id);
+            const wrapper = document.querySelector(
+                `[data-vote-type="${type}"][data-vote-id="${id}"]`
+            );
+            if (!wrapper) return;
+
+            const scoreEl = wrapper.querySelector('.vote-score');
+            const upBtn = wrapper.querySelector('.vote-btn.up');
+            const downBtn = wrapper.querySelector('.vote-btn.down');
+
+            if (scoreEl) {
+                scoreEl.textContent = score ?? 0;
+                scoreEl.classList.remove('positive', 'negative');
+                if (score > 0) scoreEl.classList.add('positive');
+                else if (score < 0) scoreEl.classList.add('negative');
+            }
+
+            if (upBtn) upBtn.classList.toggle('active-up', myVote === 1);
+            if (downBtn) downBtn.classList.toggle('active-down', myVote === -1);
+        }
+
+        function renderVoteControls(type, id, score) {
+            const myVote = getMyVote(type, id);
+            const upClass = myVote === 1 ? ' active-up' : '';
+            const downClass = myVote === -1 ? ' active-down' : '';
+            const scoreClass = score > 0 ? ' positive' : (score < 0 ? ' negative' : '');
+            const fn = type === 'post' ? 'votePost' : 'voteComment';
+
+            return `<span class="vote-controls" data-vote-type="${type}" data-vote-id="${id}">
+                <button class="vote-btn up${upClass}" title="Нравится" onclick="event.stopPropagation(); ${fn}(${id}, 1)">👍</button>
+                <span class="vote-score${scoreClass}">${score ?? 0}</span>
+                <button class="vote-btn down${downClass}" title="Не нравится" onclick="event.stopPropagation(); ${fn}(${id}, -1)">👎</button>
+            </span>`;
+        }
+
+        async function votePost(postId, value) {
+            const ok = await voteOnTarget('post', postId, value);
+            if (!ok) return;
+
+            const newScore = computeScore('post', postId);
+
+            const p = posts.find(x => x.postId === postId);
+            if (p) p.rating = newScore;
+            if (currentPost && currentPost.postId === postId) currentPost.rating = newScore;
+
+            updateVoteUI('post', postId, newScore);
+        }
+
+        async function voteComment(commentId, value) {
+            const ok = await voteOnTarget('comment', commentId, value);
+            if (!ok) return;
+
+            const newScore = computeScore('comment', commentId);
+
+            const c = currentComments.find(x => x.commentId === commentId);
+            if (c) c.rating = newScore;
+
+            updateVoteUI('comment', commentId, newScore);
+        }
+
+        async function voteOnTarget(type, id, value) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return false; }
+
+            const uid = getCurrentUserId();
+            const existing = votes.find(v => v.userId === uid &&
+                (type === 'post' ? v.postId === id : v.commentId === id));
+
+            try {
+                if (existing && existing.voteType === value) {
+                    // повторный клик снимает голос
+                    const res = await fetch(`${API_URL}/api/votes/${existing.voteId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (!res.ok) { showMessage('Ошибка отмены голоса: ' + res.status); return false; }
+                } else {
+                    const body = {
+                        postId: type === 'post' ? id : null,
+                        commentId: type === 'comment' ? id : null,
+                        voteType: value
+                    };
+                    const res = await fetch(`${API_URL}/api/votes`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) { showMessage('Ошибка голосования: ' + res.status); return false; }
+                }
+
+                await loadVotes();
+                return true;
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+                return false;
+            }
+        }
+
+        // создание подфорума
+        async function createSubforum() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+            if (!isGlobalAdmin()) { showMessage('Только администратор может создавать подфорумы'); return; }
+
+            const nameEl = document.getElementById('subforumName');
+            const descEl = document.getElementById('subforumDesc');
+            const name = nameEl.value.trim();
+            const desc = descEl.value.trim();
+
+            if (!name) { showMessage('Введите название подфорума'); return; }
+
+            try {
+                const res = await fetch(`${API_URL}/api/subforums`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ name: name, description: desc || null })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка ${res.status}: ${errText}`);
+                    return;
+                }
+
+                nameEl.value = '';
+                descEl.value = '';
+                document.getElementById('createSubforumForm').style.display = 'none';
+                showMessage('Подфорум создан!', false);
+                await loadSubforums();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // профиль
+        async function showProfilePage(profileId) {
+            showProfileSection();
+
+            const content = document.getElementById('profileContent');
+            const title = document.getElementById('profileTitle');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const token = getToken();
+
+            logoutBtn.style.display = 'none';
+
+            if (token == null) {
+                title.textContent = 'Профиль';
+                content.innerHTML = '<p class="error">Вы не авторизованы. Войдите, чтобы увидеть профиль.</p>';
+                return;
+            }
+
+            const currentId = getCurrentUserId();
+            const isOwn = currentId != null && currentId === profileId;
+
+            title.textContent = isOwn ? 'Мой профиль' : 'Профиль пользователя';
+
+            if (isOwn) {
+                logoutBtn.style.display = 'inline-block';
+            }
+
+            content.innerHTML = '<p>Загрузка...</p>';
+
+            try {
+                const url = isOwn
+                    ? `${API_URL}/api/users/me`
+                    : `${API_URL}/api/users/${profileId}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    content.innerHTML = `<p class="error">Не удалось загрузить профиль: ${res.status}</p>`;
+                    return;
+                }
+
+                const u = await res.json();
+
+                let html = `
+                    <div class="profile-row"><strong>ID:</strong> ${escapeHtml(String(u.userId ?? '—'))}</div>
+                    <div class="profile-row"><strong>Имя пользователя:</strong> ${escapeHtml(u.username ?? '—')}</div>
+                    <div class="profile-row"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
+                `;
+                if (isOwn) {
+                    html += `<div class="profile-row"><strong>Email:</strong> ${escapeHtml(u.email ?? '—')}</div>`;
+                }
+
+                content.innerHTML = html;
+            } catch (e) {
+                content.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        // подфорумы
+        async function loadSubforums() {
+            const token = getToken();
+            try {
+                const res = await fetch(`${API_URL}/api/subforums`, {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                if (!res.ok) {
+                    showMessage('Не удалось загрузить подфорумы: ' + res.status);
+                    return;
+                }
+                const data = await res.json();
+                subforums = data
+                    .filter(s => !s.isDeleted)
+                    .map(s => ({
+                        id: s.subforumId ?? s.id,
+                        name: s.name ?? s.title ?? ('Подфорум ' + (s.subforumId ?? s.id))
+                    }));
+                renderSubforums();
+                renderSubforumSelect();
+            } catch (e) {
+                showMessage('Ошибка загрузки подфорумов: ' + e.message);
+            }
+        }
+
+        function renderSubforums() {
+            const ul = document.getElementById('subforumsList');
+            ul.innerHTML = '';
+            ul.appendChild(makeSubforumItem('Все посты', null));
+
+            if (subforums.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'subforum-item';
+                li.style.color = '#999';
+                li.textContent = 'Подфорумов нет';
+                ul.appendChild(li);
+                return;
+            }
+
+            subforums.forEach(s => ul.appendChild(makeSubforumItem(s.name, s.id)));
+        }
+
+        function makeSubforumItem(name, id) {
+            const li = document.createElement('li');
+            li.className = 'subforum-item' + (id === currentSubforumId ? ' active' : '');
+            li.textContent = name;
+            li.onclick = () => {
+                currentSubforumId = id;
+                renderSubforums();
+                renderSubforumSelect();
+                renderPosts();
+            };
+            return li;
+        }
+
+        function renderSubforumSelect() {
+            const sel = document.getElementById('postSubforumId');
+            if (!sel) return;
+            sel.innerHTML = '';
+
+            if (subforums.length === 0) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '— нет подфорумов —';
+                sel.appendChild(o);
+                return;
+            }
+
+            subforums.forEach(s => {
+                const o = document.createElement('option');
+                o.value = s.id;
+                o.textContent = s.name;
+                sel.appendChild(o);
+            });
+
+            if (currentSubforumId !== null) {
+                sel.value = String(currentSubforumId);
+            }
+        }
+
+        function subforumName(id) {
+            const s = subforums.find(x => x.id === id);
+            return s ? s.name : ('Подфорум ' + id);
+        }
+
+        // теги
+        async function loadTags() {
+            try {
+                const res = await fetch(`${API_URL}/api/tags`);
+                if (!res.ok) return;
+                const tags = await res.json();
+                tagsCache = {};
+                tags.forEach(t => { tagsCache[t.tagId] = t.name; });
+            } catch (e) { }
+        }
+
+        async function ensureTagsLoaded() {
+            if (tagsLoaded) return;
+            await loadTags();
+            tagsLoaded = true;
+        }
+
+        function tagName(id) {
+            if (id == null) return null;
+            return tagsCache[id] || ('Тег ' + id);
+        }
+
+        // пользователи
+        async function getUsername(userId) {
+            if (userId == null) return '—';
+            if (usersCache[userId]) return usersCache[userId];
+            try {
+                const res = await fetch(`${API_URL}/api/users/${userId}`);
+                if (res.ok) {
+                    const u = await res.json();
+                    usersCache[userId] = u.username;
+                    return usersCache[userId];
+                }
+            } catch (e) { }
+            usersCache[userId] = 'Пользователь ' + userId;
+            return usersCache[userId];
+        }
+
+        async function ensureUsernamesLoaded(ids) {
+            const uniq = [...new Set(ids)].filter(id => id != null && !usersCache[id]);
+            await Promise.all(uniq.map(id => getUsername(id)));
+        }
+
+        // авторизация
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!res.ok) { showMessage('Ошибка входа: ' + res.status); return; }
+
+                const data = await res.json();
+                setToken(data.token);
+                localStorage.setItem('username', data.username);
+                if (data.userId != null) localStorage.setItem('userId', data.userId);
+
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+
+                showMessage('Вход выполнен!', false);
+                showApp();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                if (!res.ok) { showMessage('Ошибка регистрации: ' + res.status); return; }
+
+                const data = await res.json();
+                setToken(data.token);
+                localStorage.setItem('username', data.username);
+                if (data.userId != null) localStorage.setItem('userId', data.userId);
+
+                document.getElementById('regUsername').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+
+                showMessage('Регистрация успешна!', false);
+                showApp();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        function logout() {
+            clearToken();
+            currentSubforumId = null;
+            votes = [];
+            showLogin();
+            showMessage('Вы вышли', false);
+        }
+
+        // посты
+        async function loadPosts() {
+            const token = getToken();
+            try {
+                const res = await fetch(`${API_URL}/api/posts`, {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                if (!res.ok) {
+                    showMessage('Не удалось загрузить посты: ' + res.status);
+                    return;
+                }
+
+                const all = await res.json();
+                posts = all.filter(p => !p.isDeleted);
+
+                await ensureUsernamesLoaded(posts.map(p => p.authorId));
+
+                renderPosts();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsList');
+            const label = document.getElementById('postsFilterLabel');
+            container.innerHTML = '';
+
+            label.textContent = currentSubforumId === null
+                ? '(все подфорумы)'
+                : '(' + subforumName(currentSubforumId) + ')';
+
+            let visible = currentSubforumId === null
+                ? posts.slice()
+                : posts.filter(p => p.subforumId === currentSubforumId);
+
+            // сортировка по рейтингу по убыванию
+            visible.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+            if (visible.length === 0) {
+                container.innerHTML = '<p>Постов пока нет.</p>';
+                return;
+            }
+
+            visible.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'post';
+
+                const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
+                const tag = p.tagId != null ? tagName(p.tagId) : null;
+
+                div.innerHTML = `
+                    <h3>
+                        <a class="post-title-link" href="?post=${p.postId}">
+                            ${escapeHtml(p.title)}
+                        </a>
+                    </h3>
+                    <p>${escapeHtml(p.content)}</p>
+                    <div class="post-meta">
+                        Автор:
+                        <a class="author-link" href="?profile=${p.authorId}">
+                            ${escapeHtml(author)}
+                        </a>
+                        ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
+                        ${renderVoteControls('post', p.postId, p.rating ?? 0)}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function createPost() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const sel = document.getElementById('postSubforumId');
+            const subforumId = parseInt(sel.value, 10);
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+
+            if (!subforums.length || !sel.value) {
+                showMessage('Нет доступных подфорумов');
+                return;
+            }
+            if (!title || !content) {
+                showMessage('Заполните заголовок и текст');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/posts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ subforumId, title, content })
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    showMessage(`Ошибка ${res.status}: ${text}`);
+                    return;
+                }
+
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                showMessage('Пост создан!', false);
+                loadPosts();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // страница поста
+        async function showPostDetail(postId) {
+            showPostDetailSection();
+            currentPostId = parseInt(postId, 10);
+
+            const token = getToken();
+            const container = document.getElementById('postDetailContent');
+            container.innerHTML = '<p>Загрузка...</p>';
+
+            try {
+                await loadVotes();
+
+                const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+
+                if (!res.ok) {
+                    container.innerHTML = `<p class="error">Не удалось загрузить пост: ${res.status}</p>`;
+                    return;
+                }
+
+                const p = await res.json();
+                currentPost = p;
+
+                if (p.isDeleted) {
+                    container.innerHTML = `<p class="error">Этот пост был удалён.</p>`;
+                    document.getElementById('commentFormContainer').style.display = 'none';
+                    document.getElementById('commentsList').innerHTML = '';
+                    return;
+                }
+
+                const author = await getUsername(p.authorId);
+                const subName = p.subforumId != null ? subforumName(p.subforumId) : '—';
+                const tag = p.tagId != null ? tagName(p.tagId) : null;
+
+                const currentUserId = getCurrentUserId();
+                const isPostAuthor = currentUserId != null && p.authorId === currentUserId;
+                const canMod = canModerateSubforum(p.subforumId);
+                currentPostCanModerate = canMod;
+
+                const canDeletePost = canMod || isPostAuthor;
+
+                let html = `
+                    <h2>${escapeHtml(p.title)}</h2>
+                    <div class="post-meta" style="margin-bottom: 10px;">
+                        Автор:
+                        <a class="author-link" href="?profile=${p.authorId}">
+                            ${escapeHtml(author)}
+                        </a>
+                        |
+                        Подфорум: ${escapeHtml(subName)} |
+                        Дата: ${formatDate(p.creationDate)}
+                        ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
+                        ${renderVoteControls('post', p.postId, p.rating ?? 0)}
+                    </div>
+                    <p>${escapeHtml(p.content)}</p>
+                `;
+
+                const hasControls = canMod || canDeletePost || isPostAuthor;
+                if (hasControls) {
+                    let panelTitle = 'Управление';
+                    if (isPostAuthor && !canMod) panelTitle = 'Управление постом';
+                    else if (canMod && !isPostAuthor) panelTitle = 'Модерация';
+                    else if (canMod && isPostAuthor) panelTitle = 'Управление и модерация';
+
+                    html += `<div class="mod-panel">
+                        <h3>${panelTitle}</h3>
+                        <div class="row-buttons">`;
+
+                    if (isPostAuthor) {
+                        html += `<button onclick="startEditPost()">Редактировать</button>`;
+                    }
+
+                    if (canMod && Object.keys(tagsCache).length > 0) {
+                        const options = Object.entries(tagsCache).map(([id, name]) =>
+                            `<option value="${id}" ${String(p.tagId) === String(id) ? 'selected' : ''}>${escapeHtml(name)}</option>`
+                        ).join('');
+                        html += `
+                            <label for="tagSelect" style="margin:0; align-self:center; font-size:14px; color:#555;">Тег:</label>
+                            <select id="tagSelect">
+                                ${options}
+                            </select>
+                            <button onclick="savePostTag()">Сохранить тег</button>
+                        `;
+                    }
+
+                    if (canDeletePost) {
+                        html += `<button class="danger" onclick="deleteCurrentPost()">Удалить пост</button>`;
+                    }
+
+                    html += `</div></div>`;
+                }
+
+                container.innerHTML = html;
+
+                document.getElementById('commentFormContainer').style.display = token ? 'block' : 'none';
+
+                await loadComments(currentPostId, canMod);
+            } catch (e) {
+                container.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        // редактирование поста
+        function startEditPost() {
+            const p = currentPost;
+            if (!p) return;
+
+            const container = document.getElementById('postDetailContent');
+            container.innerHTML = `
+                <h2>Редактирование поста</h2>
+                <label style="font-size:14px; color:#555;">Заголовок:</label>
+                <input id="editPostTitle" type="text">
+                <label style="font-size:14px; color:#555;">Текст:</label>
+                <textarea id="editPostContent" rows="6"></textarea>
+                <div class="form-actions">
+                    <button class="success" onclick="saveEditedPost()">Сохранить</button>
+                    <button class="logout" onclick="showPostDetail(${currentPostId})">Отмена</button>
+                </div>
+            `;
+            document.getElementById('editPostTitle').value = p.title;
+            document.getElementById('editPostContent').value = p.content;
+        }
+
+        async function saveEditedPost() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const title = document.getElementById('editPostTitle').value.trim();
+            const content = document.getElementById('editPostContent').value.trim();
+
+            if (!title || !content) {
+                showMessage('Заполните заголовок и текст');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ ...currentPost, title, content })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка ${res.status}: ${errText}`);
+                    return;
+                }
+
+                showMessage('Пост обновлён!', false);
+                await showPostDetail(currentPostId);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        async function savePostTag() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const sel = document.getElementById('tagSelect');
+            if (!sel) return;
+            const newTagId = parseInt(sel.value, 10);
+            if (isNaN(newTagId)) {
+                showMessage('Выберите тег');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ tagId: newTagId })
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    showMessage(`Ошибка ${res.status}: ${text}`);
+                    return;
+                }
+
+                showMessage('Тег обновлён!', false);
+                await showPostDetail(currentPostId);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteCurrentPost() {
+            if (!confirm('Удалить этот пост?')) return;
+
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            try {
+                const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    showMessage('Ошибка удаления: ' + res.status);
+                    return;
+                }
+
+                showMessage('Пост удалён', false);
+                setTimeout(() => { window.location.href = window.location.pathname; }, 500);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // комментарии
+        async function loadComments(postId, canModerate) {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = '<p>Загрузка комментариев...</p>';
+
+            try {
+                const res = await fetch(`${API_URL}/api/comments`);
+                if (!res.ok) {
+                    list.innerHTML = `<p class="error">Не удалось загрузить комментарии: ${res.status}</p>`;
+                    return;
+                }
+
+                const all = await res.json();
+                const pid = parseInt(postId, 10);
+                const comments = all.filter(c => c.postId === pid);
+
+                // Оставляем только неудалённые + удалённые-родители, у которых есть неудалённый ребёнок
+                const deletedParentsToKeep = new Set();
+                comments.forEach(c => {
+                    if (!c.isDeleted && c.parentCommentId != null) {
+                        deletedParentsToKeep.add(c.parentCommentId);
+                    }
+                });
+
+                const visibleComments = comments.filter(c =>
+                    !c.isDeleted || deletedParentsToKeep.has(c.commentId)
+                );
+
+                currentComments = visibleComments;
+
+                if (visibleComments.length === 0) {
+                    list.innerHTML = '<p class="no-comments">Комментариев еще нет</p>';
+                    return;
+                }
+
+                await ensureUsernamesLoaded(
+                    visibleComments.filter(c => !c.isDeleted).map(c => c.authorId)
+                );
+
+                // Строим дерево
+                const byId = {};
+                visibleComments.forEach(c => { byId[c.commentId] = { ...c, children: [] }; });
+
+                const roots = [];
+                visibleComments.forEach(c => {
+                    const node = byId[c.commentId];
+                    if (c.parentCommentId != null && byId[c.parentCommentId]) {
+                        byId[c.parentCommentId].children.push(node);
+                    } else {
+                        roots.push(node);
+                    }
+                });
+
+                // сортировка по рейтингу
+                const sortByRating = arr => {
+                    arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    arr.forEach(n => sortByRating(n.children));
+                };
+                sortByRating(roots);
+
+                const currentUserId = getCurrentUserId();
+                list.innerHTML = '';
+
+                const renderNode = (node, depth) => {
+                    const div = document.createElement('div');
+                    div.id = 'comment-' + node.commentId;
+                    div.className = 'comment';
+                    if (depth > 0) div.style.marginLeft = (depth * 24) + 'px';
+
+                    if (node.isDeleted) {
+                        div.classList.add('deleted');
+                        div.innerHTML = `<div class="comment-meta">Комментарий удален</div>`;
+                    } else {
+                        const author = usersCache[node.authorId] || ('Пользователь ' + node.authorId);
+                        const isAuthor = currentUserId != null && node.authorId === currentUserId;
+                        const canDelete = canModerate || isAuthor;
+
+                        const replyBtn = `<button class="comment-del-btn reply-btn" onclick="startReply(${node.commentId})">Ответить</button>`;
+                        const editBtn = isAuthor
+                            ? `<button class="logout comment-del-btn" onclick="startEditComment(${node.commentId})">Изменить</button>`
+                            : '';
+                        const delBtn = canDelete
+                            ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
+                            : '';
+
+                        div.innerHTML = `
+                            <div class="comment-meta">
+                                <a class="author-link" href="?profile=${node.authorId}">
+                                    <strong>${escapeHtml(author)}</strong>
+                                </a>
+                                · ${formatDate(node.creationDate)}
+                                ${renderVoteControls('comment', node.commentId, node.rating ?? 0)}
+                                ${replyBtn}
+                                ${editBtn}
+                                ${delBtn}
+                            </div>
+                            <div>${escapeHtml(node.content)}</div>
+                            <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
+                                <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
+                                <div class="form-actions">
+                                    <button class="success" onclick="submitReply(${node.commentId})">Отправить</button>
+                                    <button class="logout" onclick="cancelReply(${node.commentId})">Отмена</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    list.appendChild(div);
+                    node.children.forEach(child => renderNode(child, depth + 1));
+                };
+
+                roots.forEach(root => renderNode(root, 0));
+            } catch (e) {
+                list.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+            }
+        }
+
+        // ответ на комментарий
+        function startReply(commentId) {
+            document.querySelectorAll('[id^="reply-form-"]').forEach(el => {
+                if (el.id !== 'reply-form-' + commentId) el.style.display = 'none';
+            });
+
+            const form = document.getElementById('reply-form-' + commentId);
+            if (!form) return;
+            form.style.display = 'block';
+            const ta = document.getElementById('reply-text-' + commentId);
+            if (ta) ta.focus();
+        }
+
+        function cancelReply(commentId) {
+            const form = document.getElementById('reply-form-' + commentId);
+            if (form) form.style.display = 'none';
+        }
+
+        async function submitReply(parentCommentId) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const ta = document.getElementById('reply-text-' + parentCommentId);
+            if (!ta) return;
+            const content = ta.value.trim();
+            if (!content) { showMessage('Введите текст ответа'); return; }
+
+            const pid = Number(currentPostId);
+            if (!pid || isNaN(pid)) {
+                showMessage('Не удалось определить пост');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        postId: pid,
+                        content: content,
+                        parentCommentId: parentCommentId
+                    })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка ${res.status}: ${errText}`);
+                    return;
+                }
+
+                showMessage('Ответ добавлен!', false);
+                await loadComments(pid, currentPostCanModerate);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // редактирование комментария
+        function startEditComment(commentId) {
+            const c = currentComments.find(x => x.commentId === commentId);
+            if (!c) return;
+
+            const div = document.getElementById('comment-' + commentId);
+            if (!div) return;
+
+            const author = usersCache[c.authorId] || 'Пользователь';
+
+            div.innerHTML = `
+                <div class="comment-meta">
+                    <strong>${escapeHtml(author)}</strong> · ${formatDate(c.creationDate)} · редактирование
+                </div>
+                <textarea id="editCommentText-${commentId}" rows="3"></textarea>
+                <div class="form-actions">
+                    <button class="success" onclick="saveEditedComment(${commentId})">Сохранить</button>
+                    <button class="logout" onclick="loadComments(${currentPostId}, ${currentPostCanModerate})">Отмена</button>
+                </div>
+            `;
+            document.getElementById('editCommentText-' + commentId).value = c.content;
+        }
+
+        async function saveEditedComment(commentId) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const textarea = document.getElementById('editCommentText-' + commentId);
+            if (!textarea) return;
+            const content = textarea.value.trim();
+            if (!content) { showMessage('Введите текст комментария'); return; }
+
+            const original = currentComments.find(x => x.commentId === commentId);
+
+            try {
+                const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(original ? { ...original, content: content } : { content: content })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка ${res.status}: ${errText}`);
+                    return;
+                }
+
+                showMessage('Комментарий обновлён!', false);
+                await loadComments(currentPostId, currentPostCanModerate);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        async function deleteCommentById(id) {
+            if (!confirm('Удалить комментарий?')) return;
+
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            try {
+                const res = await fetch(`${API_URL}/api/comments/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    showMessage('Ошибка удаления: ' + res.status);
+                    return;
+                }
+
+                showMessage('Комментарий удалён', false);
+                await loadComments(currentPostId, currentPostCanModerate);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        async function submitComment() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            const contentEl = document.getElementById('newCommentContent');
+            const content = contentEl.value.trim();
+            if (!content) { showMessage('Введите текст комментария'); return; }
+
+            const pid = Number(currentPostId);
+            if (!pid || isNaN(pid)) {
+                showMessage('Не удалось определить пост');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        postId: pid,
+                        content: content,
+                        parentCommentId: null
+                    })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка ${res.status}: ${errText}`);
+                    return;
+                }
+
+                contentEl.value = '';
+                showMessage('Комментарий добавлен!', false);
+                await loadComments(pid, currentPostCanModerate);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // старт
+        (async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('post');
+            const profileId = params.get('profile');
+
+            await ensureTagsLoaded();
+
+            if (profileId) {
+                await loadSubforums();
+                showProfilePage(parseInt(profileId, 10));
+                return;
+            }
+
+            if (postId) {
+                await loadSubforums();
+                showPostDetail(postId);
+                return;
+            }
+
+            if (getToken()) {
+                showApp();
+            } else {
+                showLogin();
+            }
+        })();
+    </script>
+</body>
+</html>
