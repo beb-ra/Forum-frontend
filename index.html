@@ -67,9 +67,33 @@
         .subforum-item {
             padding: 6px 8px; border-radius: 4px; cursor: pointer;
             font-size: 14px; margin-bottom: 2px; word-break: break-word;
+            display: flex; align-items: center; gap: 6px;
         }
         .subforum-item:hover { background: #e9f2ff; }
         .subforum-item.active { background: #007bff; color: #fff; }
+        .subforum-item.active .subforum-del-btn { color: #fff; }
+        .subforum-item.active .subforum-del-btn:hover { background: rgba(255,255,255,0.2); }
+        .subforum-name {
+            flex: 1; min-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .subforum-del-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 4px;
+            margin: 0;
+            border-radius: 3px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .subforum-del-btn:hover {
+            background: #f8d7da;
+            color: #b02a37;
+        }
+
         .content { flex: 1; min-width: 0; }
         #createPostToggle:hover { color: #007bff; }
 
@@ -78,14 +102,12 @@
             padding-top: 10px;
             border-top: 1px dashed #ccc;
         }
-        #createSubforumBlock input,
-        #createSubforumBlock textarea,
         #createSubforumBlock button {
+            width: 100%;
             font-size: 13px;
-            padding: 6px 8px;
-            margin: 3px 0;
+            padding: 8px;
+            margin: 0;
         }
-        #createSubforumBlock button { width: 100%; }
 
         .comment {
             border-left: 3px solid #ddd;
@@ -155,6 +177,81 @@
             color: #555; display: inline-block; min-width: 160px;
         }
 
+        .profile-subsection {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .profile-subsection h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #444;
+        }
+        .profile-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .profile-list-item {
+            padding: 8px 10px;
+            margin: 6px 0;
+            border-left: 3px solid #b6d8ff;
+            background: #f5faff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .profile-list-item .profile-link {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .profile-list-item .profile-link:hover { text-decoration: underline; }
+        .profile-list-item .profile-excerpt {
+            display: block;
+            color: #555;
+            margin-top: 4px;
+            font-size: 13px;
+            word-break: break-word;
+        }
+        .profile-list-item .profile-date {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .profile-empty {
+            color: #888;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .ban-item {
+            padding: 10px 12px;
+            margin: 8px 0;
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .ban-item .ban-info {
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .ban-item .ban-reason {
+            color: #555;
+            font-style: italic;
+            margin: 4px 0;
+        }
+        .ban-item .ban-dates {
+            color: #888;
+            font-size: 12px;
+        }
+        .ban-item button {
+            margin-top: 8px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
         .mod-panel {
             margin-top: 15px;
             padding: 10px;
@@ -200,6 +297,10 @@
             border-radius: 3px;
             margin-left: 6px;
         }
+        .inline-badge.banned-badge {
+            background: #dc3545;
+            color: #fff;
+        }
 
         .profile-header {
             display: flex;
@@ -207,8 +308,14 @@
             align-items: center;
             gap: 15px;
             margin-bottom: 10px;
+            flex-wrap: wrap;
         }
         .profile-header h2 { margin: 0; border: none; padding: 0; }
+        .profile-header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
 
         .form-actions {
             display: flex;
@@ -231,10 +338,120 @@
             width: 100%;
         }
 
+        /* модальные окна */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 25px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h2 {
+            margin: 0 0 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .modal label {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .modal p {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        .modal .roles-current {
+            margin: 10px 0 5px 0;
+            padding: 8px 12px;
+            background: #f0f8ff;
+            border-left: 3px solid #007bff;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+        .modal .roles-current strong { color: #0056b3; }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        .modal .modal-actions button {
+            min-width: 120px;
+            margin: 0;
+        }
+
+        .modal .radio-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+        .modal .radio-row input[type="radio"],
+        .modal .radio-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            flex-shrink: 0;
+        }
+        .modal .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            padding: 8px 12px;
+            border: 1px solid #f0d8d8;
+            background: #fff8f8;
+            border-radius: 4px;
+        }
+        .modal .checkbox-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            flex-shrink: 0;
+        }
+        .modal .role-section {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+        .modal .role-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }
             .profile-header { flex-direction: column; align-items: flex-start; }
+            .profile-header-actions { width: 100%; }
+            .profile-header-actions button { flex: 1; }
+            .modal .modal-actions { flex-direction: column; }
+            .modal .modal-actions button { width: 100%; }
         }
     </style>
 </head>
@@ -279,12 +496,7 @@
                 <ul id="subforumsList"></ul>
 
                 <div id="createSubforumBlock" style="display: none;">
-                    <button class="success" onclick="toggleCreateSubforumForm()">Создать подфорум</button>
-                    <div id="createSubforumForm" style="display: none;">
-                        <input id="subforumName" type="text" placeholder="Название">
-                        <textarea id="subforumDesc" rows="2" placeholder="Описание (необязательно)"></textarea>
-                        <button onclick="createSubforum()">Создать</button>
-                    </div>
+                    <button class="success" onclick="openCreateSubforumModal()">Создать подфорум</button>
                 </div>
             </aside>
 
@@ -327,9 +539,132 @@
 
         <div class="profile-header">
             <h2 id="profileTitle">Профиль</h2>
-            <button id="logoutBtn" class="logout" style="display: none; margin: 0;" onclick="logout()">Выйти</button>
+            <div class="profile-header-actions">
+                <button id="rolesBtn" style="display: none; margin: 0;">Настройка полномочий</button>
+                <button id="banBtn" class="danger" style="display: none; margin: 0;">Забанить</button>
+                <button id="deleteAccountBtn" class="danger" style="display: none; margin: 0;">Удалить аккаунт</button>
+                <button id="logoutBtn" class="logout" style="display: none; margin: 0;" onclick="logout()">Выйти</button>
+            </div>
         </div>
         <div id="profileContent" class="profile-card">Загрузка...</div>
+    </div>
+
+    <!-- Модальное окно: создание подфорума -->
+    <div id="createSubforumModal" class="modal-overlay" onclick="if(event.target===this) closeCreateSubforumModal()">
+        <div class="modal">
+            <h2>Создать подфорум</h2>
+
+            <label for="subforumName">Название:</label>
+            <input id="subforumName" type="text" placeholder="Введите название подфорума">
+
+            <label for="subforumDesc">Описание (необязательно):</label>
+            <textarea id="subforumDesc" rows="3" placeholder="Краткое описание подфорума"></textarea>
+
+            <div class="modal-actions">
+                <button class="success" onclick="createSubforum()">Создать</button>
+                <button class="logout" onclick="closeCreateSubforumModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: универсальное подтверждение -->
+    <div id="confirmModal" class="modal-overlay" onclick="if(event.target===this) closeConfirmModal()">
+        <div class="modal">
+            <h2 id="confirmTitle">Подтверждение</h2>
+            <p id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button id="confirmYesBtn" class="danger" onclick="confirmYes()">Удалить</button>
+                <button class="logout" onclick="closeConfirmModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: настройка полномочий -->
+    <div id="rolesModal" class="modal-overlay" onclick="if(event.target===this) closeRolesModal()">
+        <div class="modal">
+            <h2>Настройка полномочий</h2>
+            <p style="margin: 5px 0;">Пользователь: <strong id="rolesUserName">—</strong></p>
+            <div id="rolesCurrentInfo" class="roles-current">Текущие полномочия: —</div>
+
+            <div class="role-section">
+                <label class="radio-row">
+                    <input type="radio" name="roleOption" value="user">
+                    <span>Обычный пользователь</span>
+                </label>
+                <label class="radio-row">
+                    <input type="radio" name="roleOption" value="moderator">
+                    <span>Модератор подфорума</span>
+                </label>
+                <label class="radio-row">
+                    <input type="radio" name="roleOption" value="admin">
+                    <span>Администратор</span>
+                </label>
+            </div>
+
+            <div id="moderatorSubforumBlock" class="role-section" style="display: none;">
+                <label for="roleSubforumId">Подфорум для модератора:</label>
+                <select id="roleSubforumId"></select>
+                <p class="role-hint">Модератор сможет управлять постами и комментариями только в выбранном подфоруме.</p>
+            </div>
+
+            <div class="modal-actions">
+                <button class="success" onclick="saveUserRoles()">Сохранить</button>
+                <button class="logout" onclick="closeRolesModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: бан пользователя -->
+    <div id="banModal" class="modal-overlay" onclick="if(event.target===this) closeBanModal()">
+        <div class="modal">
+            <h2>Забанить пользователя</h2>
+            <p style="margin: 5px 0;">Пользователь: <strong id="banUserName">—</strong></p>
+
+            <label for="banReason">Причина бана:</label>
+            <textarea id="banReason" rows="3" placeholder="Опишите причину бана"></textarea>
+
+            <label for="banDuration">Срок:</label>
+            <select id="banDuration">
+                <option value="1">1 день</option>
+                <option value="7">7 дней</option>
+                <option value="30">30 дней</option>
+                <option value="90">90 дней</option>
+                <option value="365">1 год</option>
+                <option value="">Навсегда</option>
+            </select>
+
+            <div class="role-section">
+                <label class="radio-row">
+                    <input type="radio" name="banScope" value="global" id="banScopeGlobal">
+                    <span>Весь форум</span>
+                </label>
+                <label class="radio-row">
+                    <input type="radio" name="banScope" value="subforum" id="banScopeSubforum">
+                    <span>Подфорум</span>
+                </label>
+            </div>
+
+            <div id="banSubforumBlock" class="role-section" style="display: none;">
+                <label for="banSubforumId">Подфорум:</label>
+                <select id="banSubforumId"></select>
+                <p class="role-hint">Пользователь не сможет писать в выбранном подфоруме.</p>
+            </div>
+
+            <label class="checkbox-row" for="banDeleteContent">
+                <input type="checkbox" id="banDeleteContent">
+                <span>Удалить все посты и комментарии</span>
+            </label>
+
+            <label class="checkbox-row" for="banDeleteAccount">
+                <input type="checkbox" id="banDeleteAccount">
+                <span>Забанить и удалить аккаунт</span>
+            </label>
+
+            <div class="modal-actions">
+                <button class="danger" onclick="saveBan()">Забанить</button>
+                <button class="logout" onclick="closeBanModal()">Отмена</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -347,6 +682,18 @@
         let currentPost = null;
         let currentComments = [];
         let votes = [];
+
+        // отложенное действие для confirm-модалки
+        let pendingConfirmAction = null;
+
+        // кэш списка ролей (Admin/Moderator с их id)
+        let rolesList = [];
+
+        // какой профиль сейчас редактируется в модалке полномочий
+        let currentRolesProfileId = null;
+
+        // какой профиль сейчас баним
+        let currentBanProfileId = null;
 
         // утилиты
         function showMessage(text, isError = true) {
@@ -380,6 +727,12 @@
             const d = new Date(dateStr);
             if (isNaN(d)) return '';
             return d.toLocaleString('ru-RU');
+        }
+
+        function truncate(text, max = 120) {
+            if (text == null) return '';
+            const s = String(text);
+            return s.length > max ? s.slice(0, max) + '…' : s;
         }
 
         // JWT и роли
@@ -421,6 +774,13 @@
             return roles.includes(subforumId + ':Moderator');
         }
 
+        function getModeratedSubforumIds() {
+            return getSubforumRoles()
+                .filter(r => r.endsWith(':Moderator'))
+                .map(r => parseInt(r.split(':')[0], 10))
+                .filter(id => !isNaN(id));
+        }
+
         function renderRoleBadges() {
             const el = document.getElementById('roleBadges');
             if (!el) return;
@@ -429,10 +789,7 @@
                 el.innerHTML = '<span class="inline-badge">Администратор</span>';
                 return;
             }
-            const moderatorOf = roles
-                .filter(r => r.endsWith(':Moderator'))
-                .map(r => parseInt(r.split(':')[0], 10))
-                .filter(id => !isNaN(id));
+            const moderatorOf = getModeratedSubforumIds();
             if (moderatorOf.length > 0) {
                 const names = moderatorOf.map(id => subforumName(id) || ('#' + id));
                 el.innerHTML = '<span class="inline-badge">Модератор: ' +
@@ -509,9 +866,633 @@
             }
         }
 
-        function toggleCreateSubforumForm() {
-            const form = document.getElementById('createSubforumForm');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        // модальное окно создания подфорума
+        function openCreateSubforumModal() {
+            if (!isGlobalAdmin()) {
+                showMessage('Только администратор может создавать подфорумы');
+                return;
+            }
+            document.getElementById('createSubforumModal').classList.add('open');
+            document.getElementById('subforumName').value = '';
+            document.getElementById('subforumDesc').value = '';
+            setTimeout(() => document.getElementById('subforumName').focus(), 50);
+        }
+
+        function closeCreateSubforumModal() {
+            document.getElementById('createSubforumModal').classList.remove('open');
+        }
+
+        // универсальное подтверждение
+        function showConfirm(message, onConfirm, title = 'Подтверждение', yesText = 'Удалить') {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmYesBtn').textContent = yesText;
+            pendingConfirmAction = onConfirm;
+            document.getElementById('confirmModal').classList.add('open');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('open');
+            pendingConfirmAction = null;
+        }
+
+        async function confirmYes() {
+            const action = pendingConfirmAction;
+            closeConfirmModal();
+            if (typeof action === 'function') {
+                await action();
+            }
+        }
+
+        // удаление своего аккаунта
+        function askDeleteOwnAccount() {
+            const uid = getCurrentUserId();
+            if (uid == null) { showMessage('Вы не авторизованы'); return; }
+
+            showConfirm(
+                'Вы действительно хотите удалить свой аккаунт? Это действие нельзя отменить.',
+                () => deleteOwnAccount(uid),
+                'Удаление аккаунта',
+                'Удалить'
+            );
+        }
+
+        async function deleteOwnAccount(uid) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            try {
+                const res = await fetch(`${API_URL}/api/users/${uid}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try { errText = await res.text(); } catch (_) { }
+                    showMessage(`Ошибка удаления аккаунта: ${res.status} ${errText}`);
+                    return;
+                }
+
+                clearToken();
+                currentSubforumId = null;
+                votes = [];
+
+                showMessage('Аккаунт удалён', false);
+                setTimeout(() => {
+                    window.location.href = window.location.pathname;
+                }, 800);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // роли: список ролей (Admin / Moderator)
+        async function loadRolesList() {
+            if (rolesList.length > 0) return;
+            const token = getToken();
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/api/roles`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) return;
+                rolesList = await res.json();
+            } catch (e) { }
+        }
+
+        function getRoleIdByName(name) {
+            const r = rolesList.find(r => (r.roleName || '').toLowerCase() === name.toLowerCase());
+            return r ? r.roleId : null;
+        }
+
+        // модальное окно настройки полномочий
+        async function openRolesModal(profileId, username) {
+            if (!isGlobalAdmin()) {
+                showMessage('Только администратор может изменять полномочия');
+                return;
+            }
+
+            currentRolesProfileId = profileId;
+
+            document.getElementById('rolesUserName').textContent = username || ('ID ' + profileId);
+
+            const subSel = document.getElementById('roleSubforumId');
+            subSel.innerHTML = '';
+            if (subforums.length === 0) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '— нет подфорумов —';
+                subSel.appendChild(o);
+            } else {
+                subforums.forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id;
+                    o.textContent = s.name;
+                    subSel.appendChild(o);
+                });
+            }
+
+            document.getElementById('rolesModal').classList.add('open');
+            document.getElementById('moderatorSubforumBlock').style.display = 'none';
+            document.getElementById('rolesCurrentInfo').textContent = 'Текущие полномочия: загрузка...';
+
+            setRoleRadio('user');
+
+            await loadRolesList();
+
+            let userRoles = [];
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_URL}/api/subforumroles`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const all = await res.json();
+                    userRoles = all.filter(r => r.userId === profileId);
+                }
+            } catch (e) { }
+
+            const adminRoleId = getRoleIdByName('Admin');
+            const moderatorRoleId = getRoleIdByName('Moderator');
+
+            const hasAdmin = userRoles.some(r => r.roleId === adminRoleId && r.subforumId == null);
+            const moderatorRoles = userRoles.filter(r => r.roleId === moderatorRoleId && r.subforumId != null);
+
+            const labels = [];
+            if (hasAdmin) labels.push('Администратор');
+            moderatorRoles.forEach(mr => {
+                const s = subforums.find(x => x.id === mr.subforumId);
+                labels.push('Модератор: ' + (s ? s.name : ('#' + mr.subforumId)));
+            });
+            if (labels.length === 0) labels.push('Обычный пользователь');
+
+            document.getElementById('rolesCurrentInfo').innerHTML =
+                'Текущие полномочия: <strong>' + escapeHtml(labels.join(', ')) + '</strong>';
+
+            if (hasAdmin) {
+                setRoleRadio('admin');
+            } else if (moderatorRoles.length > 0) {
+                setRoleRadio('moderator');
+                const firstSubId = moderatorRoles[0].subforumId;
+                if (subforums.some(s => s.id === firstSubId)) {
+                    subSel.value = String(firstSubId);
+                }
+                document.getElementById('moderatorSubforumBlock').style.display = 'block';
+            } else {
+                setRoleRadio('user');
+            }
+        }
+
+        function setRoleRadio(value) {
+            document.querySelectorAll('input[name="roleOption"]').forEach(r => {
+                r.checked = (r.value === value);
+            });
+        }
+
+        function closeRolesModal() {
+            document.getElementById('rolesModal').classList.remove('open');
+            currentRolesProfileId = null;
+        }
+
+        document.querySelectorAll('input[name="roleOption"]').forEach(r => {
+            r.addEventListener('change', () => {
+                const block = document.getElementById('moderatorSubforumBlock');
+                block.style.display = (r.value === 'moderator') ? 'block' : 'none';
+            });
+        });
+
+        async function saveUserRoles() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+            if (!isGlobalAdmin()) { showMessage('Только администратор может менять полномочия'); return; }
+            if (currentRolesProfileId == null) return;
+
+            const profileId = currentRolesProfileId;
+
+            const selected = document.querySelector('input[name="roleOption"]:checked');
+            if (!selected) { showMessage('Выберите роль'); return; }
+            const roleValue = selected.value;
+
+            let existingRoles = [];
+            try {
+                const res = await fetch(`${API_URL}/api/subforumroles`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const all = await res.json();
+                    existingRoles = all.filter(r => r.userId === profileId);
+                }
+            } catch (e) { }
+
+            for (const r of existingRoles) {
+                try {
+                    await fetch(`${API_URL}/api/subforumroles/${r.subfRoleId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                } catch (e) { }
+            }
+
+            if (roleValue !== 'user') {
+                await loadRolesList();
+
+                let roleId = null;
+                let subforumId = null;
+
+                if (roleValue === 'admin') {
+                    roleId = getRoleIdByName('Admin');
+                } else if (roleValue === 'moderator') {
+                    roleId = getRoleIdByName('Moderator');
+                    const subSel = document.getElementById('roleSubforumId');
+                    subforumId = parseInt(subSel.value, 10);
+                    if (!subforumId || isNaN(subforumId)) {
+                        showMessage('Выберите подфорум для модератора');
+                        return;
+                    }
+                }
+
+                if (roleId == null) {
+                    showMessage('Не удалось определить роль на сервере');
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/api/subforumroles`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            userId: profileId,
+                            subforumId: subforumId,
+                            roleId: roleId
+                        })
+                    });
+
+                    if (!res.ok) {
+                        let errText = '';
+                        try { errText = await res.text(); } catch (_) { }
+                        showMessage(`Ошибка назначения роли: ${res.status} ${errText}`);
+                        return;
+                    }
+                } catch (e) {
+                    showMessage('Ошибка: ' + e.message);
+                    return;
+                }
+            }
+
+            closeRolesModal();
+            showMessage('Полномочия обновлены', false);
+        }
+
+        // бан пользователя
+        function canCurrentUserBan() {
+            if (isGlobalAdmin()) return true;
+            return getModeratedSubforumIds().length > 0;
+        }
+
+        function openBanModal(profileId, username) {
+            if (!canCurrentUserBan()) {
+                showMessage('У вас нет прав на бан');
+                return;
+            }
+
+            currentBanProfileId = profileId;
+
+            document.getElementById('banUserName').textContent = username || ('ID ' + profileId);
+            document.getElementById('banReason').value = '';
+            document.getElementById('banDuration').value = '';
+            document.getElementById('banDeleteAccount').checked = false;
+            document.getElementById('banDeleteContent').checked = false;
+
+            const isAdmin = isGlobalAdmin();
+            const moderated = getModeratedSubforumIds();
+
+            const globalRow = document.getElementById('banScopeGlobal').closest('label');
+            globalRow.style.display = isAdmin ? 'flex' : 'none';
+
+            const subSel = document.getElementById('banSubforumId');
+            subSel.innerHTML = '';
+
+            const available = isAdmin
+                ? subforums.slice()
+                : subforums.filter(s => moderated.includes(s.id));
+
+            if (available.length === 0) {
+                const o = document.createElement('option');
+                o.value = '';
+                o.textContent = '— нет доступных подфорумов —';
+                subSel.appendChild(o);
+            } else {
+                available.forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id;
+                    o.textContent = s.name;
+                    subSel.appendChild(o);
+                });
+            }
+
+            if (isAdmin) {
+                document.getElementById('banScopeGlobal').checked = true;
+                document.getElementById('banSubforumBlock').style.display = 'none';
+            } else {
+                document.getElementById('banScopeSubforum').checked = true;
+                document.getElementById('banSubforumBlock').style.display = 'block';
+            }
+
+            document.getElementById('banModal').classList.add('open');
+        }
+
+        function closeBanModal() {
+            document.getElementById('banModal').classList.remove('open');
+            currentBanProfileId = null;
+        }
+
+        document.querySelectorAll('input[name="banScope"]').forEach(r => {
+            r.addEventListener('change', () => {
+                const block = document.getElementById('banSubforumBlock');
+                block.style.display = (r.value === 'subforum') ? 'block' : 'none';
+            });
+        });
+
+        // Удалить все посты и комментарии пользователя
+        async function deleteUserContent(userId) {
+            const token = getToken();
+            if (!token) return { postsFailed: 0, commentsFailed: 0 };
+
+            let postsFailed = 0;
+            let commentsFailed = 0;
+
+            // Посты
+            try {
+                const res = await fetch(`${API_URL}/api/posts`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const all = await res.json();
+                    const userPosts = all.filter(p => p.authorId === userId && !p.isDeleted);
+                    for (const p of userPosts) {
+                        const r = await fetch(`${API_URL}/api/posts/${p.postId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        if (!r.ok) postsFailed++;
+                    }
+                }
+            } catch (e) { }
+
+            // Комментарии
+            try {
+                const res = await fetch(`${API_URL}/api/comments`);
+                if (res.ok) {
+                    const all = await res.json();
+                    const userComments = all.filter(c => c.authorId === userId && !c.isDeleted);
+                    for (const c of userComments) {
+                        const r = await fetch(`${API_URL}/api/comments/${c.commentId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        if (!r.ok) commentsFailed++;
+                    }
+                }
+            } catch (e) { }
+
+            return { postsFailed, commentsFailed };
+        }
+
+        async function saveBan() {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+            if (currentBanProfileId == null) return;
+
+            const reason = document.getElementById('banReason').value.trim();
+            if (!reason) { showMessage('Укажите причину бана'); return; }
+
+            const durationDays = document.getElementById('banDuration').value;
+            let expiresDate = null;
+            if (durationDays) {
+                const d = new Date();
+                d.setDate(d.getDate() + parseInt(durationDays, 10));
+                expiresDate = d.toISOString();
+            }
+
+            const scope = document.querySelector('input[name="banScope"]:checked').value;
+
+            let subforumId = null;
+            if (scope === 'subforum') {
+                subforumId = parseInt(document.getElementById('banSubforumId').value, 10);
+                if (!subforumId || isNaN(subforumId)) {
+                    showMessage('Выберите подфорум');
+                    return;
+                }
+            }
+
+            const banAndDeleteContent = document.getElementById('banDeleteContent').checked;
+            const banAndDeleteAccount = document.getElementById('banDeleteAccount').checked;
+
+            const banUserId = currentBanProfileId;
+
+            try {
+                const res = await fetch(`${API_URL}/api/bans`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        userId: banUserId,
+                        subforumId: subforumId,
+                        banReason: reason,
+                        expiresDate: expiresDate
+                    })
+                });
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        const ct = res.headers.get('content-type') || '';
+                        if (ct.includes('application/json')) {
+                            const j = await res.json();
+                            errText = j.title || j.detail || JSON.stringify(j);
+                            if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                        } else {
+                            errText = await res.text();
+                        }
+                    } catch (_) { }
+                    showMessage(`Ошибка бана: ${res.status} ${errText}`);
+                    return;
+                }
+
+                // 1. Удаление контента (постов и комментариев)
+                let contentErrors = null;
+                if (banAndDeleteContent) {
+                    contentErrors = await deleteUserContent(banUserId);
+                }
+
+                // 2. Удаление аккаунта
+                let accountDeleted = false;
+                if (banAndDeleteAccount) {
+                    try {
+                        const delRes = await fetch(`${API_URL}/api/users/${banUserId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        if (delRes.ok) {
+                            accountDeleted = true;
+                        } else {
+                            showMessage('Пользователь забанен, но аккаунт удалить не удалось: ' + delRes.status);
+                        }
+                    } catch (e) {
+                        showMessage('Пользователь забанен, но аккаунт удалить не удалось: ' + e.message);
+                    }
+                }
+
+                closeBanModal();
+
+                // Итоговое сообщение
+                const parts = ['Пользователь забанен'];
+                if (banAndDeleteContent && contentErrors) {
+                    if (contentErrors.postsFailed === 0 && contentErrors.commentsFailed === 0) {
+                        parts.push('контент удалён');
+                    } else {
+                        parts.push(`контент частично удалён (постов: -${contentErrors.postsFailed}, комментариев: -${contentErrors.commentsFailed})`);
+                    }
+                }
+                if (accountDeleted) parts.push('аккаунт удалён');
+
+                showMessage(parts.join(', '), false);
+
+                // Если мы на странице этого пользователя — уходим на главную
+                const params = new URLSearchParams(window.location.search);
+                const pid = parseInt(params.get('profile'), 10);
+
+                if (pid === banUserId) {
+                    if (accountDeleted) {
+                        setTimeout(() => { window.location.href = window.location.pathname; }, 600);
+                    } else {
+                        // перезагрузить профиль, чтобы отобразить обновления
+                        setTimeout(() => { showProfilePage(banUserId); }, 600);
+                    }
+                } else if (isGlobalAdmin()) {
+                    // если мы не на этом профиле и мы админ — но нам всё равно нечего обновлять
+                }
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // бан-лист в профиле (для админа)
+        async function loadUserBans(profileId) {
+            const token = getToken();
+            if (!token || !isGlobalAdmin()) return [];
+            try {
+                const res = await fetch(`${API_URL}/api/bans`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) return [];
+                const all = await res.json();
+                return all.filter(b => b.userId === profileId);
+            } catch (e) {
+                return [];
+            }
+        }
+
+        async function unbanUser(banId) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+
+            try {
+                const res = await fetch(`${API_URL}/api/bans/${banId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    showMessage('Ошибка снятия бана: ' + res.status);
+                    return;
+                }
+
+                showMessage('Бан снят', false);
+                const params = new URLSearchParams(window.location.search);
+                const pid = parseInt(params.get('profile'), 10);
+                if (!isNaN(pid)) await showProfilePage(pid);
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        }
+
+        // закрытие модалок по Esc
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeCreateSubforumModal();
+                closeConfirmModal();
+                closeRolesModal();
+                closeBanModal();
+            }
+        });
+
+        // удаление подфорума
+        function askDeleteSubforum(id, name) {
+            showConfirm(
+                `Вы действительно хотите удалить подфорум «${name}»? Все посты в нём будут удалены.`,
+                () => deleteSubforum(id, name),
+                'Удаление подфорума',
+                'Удалить'
+            );
+        }
+
+        async function deleteSubforum(id, name) {
+            const token = getToken();
+            if (!token) { showMessage('Сначала войдите'); return; }
+            if (!isGlobalAdmin()) { showMessage('Только администратор может удалять подфорумы'); return; }
+
+            try {
+                const postsRes = await fetch(`${API_URL}/api/posts`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!postsRes.ok) {
+                    showMessage('Не удалось получить список постов: ' + postsRes.status);
+                    return;
+                }
+                const allPosts = await postsRes.json();
+                const postsToDelete = allPosts.filter(p =>
+                    p.subforumId === id && !p.isDeleted
+                );
+
+                let failed = 0;
+                for (const p of postsToDelete) {
+                    const r = await fetch(`${API_URL}/api/posts/${p.postId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (!r.ok) failed++;
+                }
+
+                const res = await fetch(`${API_URL}/api/subforums/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    showMessage('Ошибка удаления подфорума: ' + res.status);
+                    return;
+                }
+
+                if (currentSubforumId === id) currentSubforumId = null;
+
+                if (failed > 0) {
+                    showMessage(`Подфорум удалён, но ${failed} пост(ов) удалить не удалось`);
+                } else {
+                    showMessage(`Подфорум «${name}» удалён`, false);
+                }
+
+                await loadSubforums();
+                await loadPosts();
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
         }
 
         // голоса
@@ -611,7 +1592,6 @@
 
             try {
                 if (existing && existing.voteType === value) {
-                    // повторный клик снимает голос
                     const res = await fetch(`${API_URL}/api/votes/${existing.voteId}`, {
                         method: 'DELETE',
                         headers: { 'Authorization': 'Bearer ' + token }
@@ -683,7 +1663,7 @@
 
                 nameEl.value = '';
                 descEl.value = '';
-                document.getElementById('createSubforumForm').style.display = 'none';
+                closeCreateSubforumModal();
                 showMessage('Подфорум создан!', false);
                 await loadSubforums();
             } catch (e) {
@@ -698,9 +1678,18 @@
             const content = document.getElementById('profileContent');
             const title = document.getElementById('profileTitle');
             const logoutBtn = document.getElementById('logoutBtn');
+            const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+            const rolesBtn = document.getElementById('rolesBtn');
+            const banBtn = document.getElementById('banBtn');
             const token = getToken();
 
             logoutBtn.style.display = 'none';
+            deleteAccountBtn.style.display = 'none';
+            deleteAccountBtn.onclick = null;
+            rolesBtn.style.display = 'none';
+            rolesBtn.onclick = null;
+            banBtn.style.display = 'none';
+            banBtn.onclick = null;
 
             if (token == null) {
                 title.textContent = 'Профиль';
@@ -712,10 +1701,6 @@
             const isOwn = currentId != null && currentId === profileId;
 
             title.textContent = isOwn ? 'Мой профиль' : 'Профиль пользователя';
-
-            if (isOwn) {
-                logoutBtn.style.display = 'inline-block';
-            }
 
             content.innerHTML = '<p>Загрузка...</p>';
 
@@ -744,7 +1729,139 @@
                     html += `<div class="profile-row"><strong>Email:</strong> ${escapeHtml(u.email ?? '—')}</div>`;
                 }
 
+                // Посты и комментарии пользователя
+                let userPosts = [];
+                let userComments = [];
+                let postsById = {};
+
+                try {
+                    const [postsRes, commentsRes] = await Promise.all([
+                        fetch(`${API_URL}/api/posts`),
+                        fetch(`${API_URL}/api/comments`)
+                    ]);
+
+                    if (postsRes.ok) {
+                        const allPosts = await postsRes.json();
+                        allPosts.forEach(p => {
+                            postsById[p.postId] = {
+                                title: p.title,
+                                isDeleted: !!p.isDeleted
+                            };
+                        });
+                        userPosts = allPosts
+                            .filter(p => !p.isDeleted && p.authorId === profileId)
+                            .sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate))
+                            .slice(0, 5);
+                    }
+
+                    if (commentsRes.ok) {
+                        const allComments = await commentsRes.json();
+                        userComments = allComments
+                            .filter(c => !c.isDeleted && c.authorId === profileId)
+                            .sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate))
+                            .slice(0, 5);
+                    }
+                } catch (_) { }
+
+                // Блок «Активные баны» (видит только админ)
+                const userBans = await loadUserBans(profileId);
+                if (isGlobalAdmin() && userBans.length > 0) {
+                    html += `<div class="profile-subsection">
+                        <h3>Активные баны</h3>`;
+                    userBans.forEach(b => {
+                        const subName = b.subforumId == null
+                            ? 'Весь форум'
+                            : (subforumName(b.subforumId) || ('Подфорум ' + b.subforumId));
+                        const expires = b.expiresDate
+                            ? formatDate(b.expiresDate)
+                            : 'бессрочно';
+                        html += `<div class="ban-item">
+                            <div class="ban-info">
+                                <strong>Область:</strong> ${escapeHtml(subName)}
+                            </div>
+                            <div class="ban-reason">Причина: ${escapeHtml(b.banReason || '—')}</div>
+                            <div class="ban-dates">
+                                Забанен: ${escapeHtml(formatDate(b.bannedDate))} · До: ${escapeHtml(expires)}
+                            </div>
+                            <button class="success" onclick="unbanUser(${b.banId})">Снять бан</button>
+                        </div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                html += `<div class="profile-subsection">
+                    <h3>Недавние посты</h3>`;
+
+                if (userPosts.length === 0) {
+                    html += `<p class="profile-empty">Постов пока нет.</p>`;
+                } else {
+                    html += `<ul class="profile-list">`;
+                    userPosts.forEach(p => {
+                        html += `<li class="profile-list-item">
+                            <a class="profile-link" href="?post=${p.postId}">
+                                ${escapeHtml(p.title)}
+                            </a>
+                            <span class="profile-excerpt">${escapeHtml(truncate(p.content, 120))}</span>
+                            <span class="profile-date">${escapeHtml(formatDate(p.creationDate))}</span>
+                        </li>`;
+                    });
+                    html += `</ul>`;
+                }
+
+                html += `</div>`;
+
+                html += `<div class="profile-subsection">
+                    <h3>Недавние комментарии</h3>`;
+
+                if (userComments.length === 0) {
+                    html += `<p class="profile-empty">Комментариев пока нет.</p>`;
+                } else {
+                    html += `<ul class="profile-list">`;
+                    userComments.forEach(c => {
+                        const postInfo = postsById[c.postId];
+                        const postTitle = postInfo ? postInfo.title : 'Пост';
+                        const postDeleted = postInfo ? postInfo.isDeleted : true;
+
+                        if (postDeleted) {
+                            html += `<li class="profile-list-item">
+                                <span class="profile-link" style="color:#888; cursor:default;">
+                                    ${escapeHtml(postTitle)} (удалён)
+                                </span>
+                                <span class="profile-excerpt">${escapeHtml(truncate(c.content, 120))}</span>
+                                <span class="profile-date">${escapeHtml(formatDate(c.creationDate))}</span>
+                            </li>`;
+                        } else {
+                            html += `<li class="profile-list-item">
+                                <a class="profile-link" href="?post=${c.postId}">
+                                    ${escapeHtml(postTitle)}
+                                </a>
+                                <span class="profile-excerpt">${escapeHtml(truncate(c.content, 120))}</span>
+                                <span class="profile-date">${escapeHtml(formatDate(c.creationDate))}</span>
+                            </li>`;
+                        }
+                    });
+                    html += `</ul>`;
+                }
+
+                html += `</div>`;
+
                 content.innerHTML = html;
+
+                // Кнопки в шапке профиля
+                if (isOwn) {
+                    logoutBtn.style.display = 'inline-block';
+                    deleteAccountBtn.style.display = 'inline-block';
+                    deleteAccountBtn.onclick = askDeleteOwnAccount;
+                } else {
+                    if (isGlobalAdmin()) {
+                        rolesBtn.style.display = 'inline-block';
+                        rolesBtn.onclick = () => openRolesModal(profileId, u.username || '');
+                    }
+                    if (canCurrentUserBan()) {
+                        banBtn.style.display = 'inline-block';
+                        banBtn.onclick = () => openBanModal(profileId, u.username || '');
+                    }
+                }
             } catch (e) {
                 content.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
             }
@@ -795,7 +1912,25 @@
         function makeSubforumItem(name, id) {
             const li = document.createElement('li');
             li.className = 'subforum-item' + (id === currentSubforumId ? ' active' : '');
-            li.textContent = name;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'subforum-name';
+            nameSpan.textContent = name;
+            li.appendChild(nameSpan);
+
+            if (id !== null && isGlobalAdmin()) {
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'subforum-del-btn';
+                delBtn.title = 'Удалить подфорум';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    askDeleteSubforum(id, name);
+                };
+                li.appendChild(delBtn);
+            }
+
             li.onclick = () => {
                 currentSubforumId = id;
                 renderSubforums();
@@ -981,7 +2116,6 @@
                 ? posts.slice()
                 : posts.filter(p => p.subforumId === currentSubforumId);
 
-            // сортировка по рейтингу по убыванию
             visible.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
             if (visible.length === 0) {
@@ -1303,7 +2437,6 @@
                 const pid = parseInt(postId, 10);
                 const comments = all.filter(c => c.postId === pid);
 
-                // Оставляем только неудалённые + удалённые-родители, у которых есть неудалённый ребёнок
                 const deletedParentsToKeep = new Set();
                 comments.forEach(c => {
                     if (!c.isDeleted && c.parentCommentId != null) {
@@ -1326,7 +2459,6 @@
                     visibleComments.filter(c => !c.isDeleted).map(c => c.authorId)
                 );
 
-                // Строим дерево
                 const byId = {};
                 visibleComments.forEach(c => { byId[c.commentId] = { ...c, children: [] }; });
 
@@ -1340,7 +2472,6 @@
                     }
                 });
 
-                // сортировка по рейтингу
                 const sortByRating = arr => {
                     arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
                     arr.forEach(n => sortByRating(n.children));
@@ -1404,7 +2535,6 @@
             }
         }
 
-        // ответ на комментарий
         function startReply(commentId) {
             document.querySelectorAll('[id^="reply-form-"]').forEach(el => {
                 if (el.id !== 'reply-form-' + commentId) el.style.display = 'none';
@@ -1474,7 +2604,6 @@
             }
         }
 
-        // редактирование комментария
         function startEditComment(commentId) {
             const c = currentComments.find(x => x.commentId === commentId);
             if (!c) return;
