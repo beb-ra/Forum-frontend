@@ -464,8 +464,13 @@
 
     <div id="message"></div>
 
+    <!-- Загрузка -->
+    <div id="loadingSection" class="section">
+        <p style="color:#888;">Загрузка...</p>
+    </div>
+
     <!-- Логин -->
-    <div id="loginSection" class="section">
+    <div id="loginSection" class="section hidden">
         <h2>Вход</h2>
         <input id="loginEmail" type="email" placeholder="Email">
         <input id="loginPassword" type="password" placeholder="Пароль">
@@ -813,11 +818,6 @@
             window.location.href = window.location.pathname;
         }
 
-        function hideAllSections() {
-            ['loginSection', 'registerSection', 'appSection', 'postDetailSection', 'profileSection']
-                .forEach(id => document.getElementById(id).className = 'section hidden');
-        }
-
         // UI
         function showLogin() {
             hideAllSections();
@@ -830,7 +830,6 @@
         }
 
         async function showApp() {
-            hideAllSections();
             document.getElementById('appSection').className = 'section';
             document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
 
@@ -842,6 +841,9 @@
             await loadVotes();
             renderRoleBadges();
             await loadPosts();
+
+            hideAllSections();
+            document.getElementById('appSection').className = 'section';
         }
 
         function showPostDetailSection() {
@@ -2772,6 +2774,12 @@
                 showLogin();
             }
         })();
+
+	function hideAllSections() {
+    ['loginSection', 'registerSection', 'appSection',
+     'postDetailSection', 'profileSection', 'loadingSection']
+        .forEach(id => document.getElementById(id).className = 'section hidden');
+	}
     </script>
 </body>
 </html>
