@@ -1,0 +1,449 @@
+	* { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { max-width: 900px; margin: 20px auto; padding: 0 20px; }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .profile-btn {
+            background: #e7f3ff;
+            border: 1px solid #b6d8ff;
+            color: #0056b3;
+            border-radius: 50%;
+            width: 42px; height: 42px;
+            padding: 0;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-btn:hover { background: #d0e6ff; }
+
+        h1 { color: #333; }
+        h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 18px; }
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .section.hidden { display: none; }
+        input, textarea, select, button { padding: 8px; margin: 5px 0; font-size: 14px; }
+        input, textarea, select { width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 10px 20px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; color: #fff; }
+        button.danger:hover { background: #b02a37; }
+        button.logout { background: #6c757d; color: #fff; }
+        button.logout:hover { background: #5a6268; }
+        button.success { background: #28a745; color: #fff; }
+        button.success:hover { background: #1e7e34; }
+
+        .post { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 6px; background: #f9f9f9; }
+        .post h3 { margin: 0 0 5px 0; }
+        .post-title-link { color: #0056b3; text-decoration: none; }
+        .post-title-link:hover { text-decoration: underline; }
+        .post-meta { color: #666; font-size: 12px; }
+        .author-link { color: #0056b3; text-decoration: none; }
+        .author-link:hover { text-decoration: underline; }
+        .error { color: #dc3545; margin: 10px 0; }
+        .success { color: #28a745; margin: 10px 0; }
+        .user-info { background: #e7f3ff; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; }
+        .layout { display: flex; gap: 20px; align-items: flex-start; }
+        .sidebar {
+            width: 200px; flex-shrink: 0;
+            border: 1px solid #ddd; border-radius: 8px;
+            padding: 10px; background: #fafafa;
+        }
+        .sidebar h2 { font-size: 16px; margin: 0 0 8px 0; }
+        #subforumsList { list-style: none; margin: 0; padding: 0; }
+        .subforum-item {
+            padding: 6px 8px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; margin-bottom: 2px; word-break: break-word;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .subforum-item:hover { background: #e9f2ff; }
+        .subforum-item.active { background: #007bff; color: #fff; }
+        .subforum-item.active .subforum-del-btn { color: #fff; }
+        .subforum-item.active .subforum-del-btn:hover { background: rgba(255,255,255,0.2); }
+        .subforum-name {
+            flex: 1; min-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .subforum-del-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0 4px;
+            margin: 0;
+            border-radius: 3px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .subforum-del-btn:hover {
+            background: #f8d7da;
+            color: #b02a37;
+        }
+
+        .content { flex: 1; min-width: 0; }
+        #createPostToggle:hover { color: #007bff; }
+
+        #createSubforumBlock {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        #createSubforumBlock button {
+            width: 100%;
+            font-size: 13px;
+            padding: 8px;
+            margin: 0;
+        }
+
+        .comment {
+            border-left: 3px solid #ddd;
+            padding: 8px 12px; margin: 8px 0;
+            background: #fafafa; border-radius: 4px;
+        }
+        .comment.deleted {
+            background: #f3f3f3;
+            border-left-color: #bbb;
+            color: #888;
+        }
+        .comment-meta { color: #666; font-size: 12px; margin-bottom: 4px; }
+        .comment.deleted .comment-meta { color: #999; }
+        .no-comments { color: #888; font-style: italic; padding: 10px 0; }
+
+        .reply-indicator {
+            display: inline-block;
+            background: #eef4ff;
+            color: #355f99;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .vote-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+        button.vote-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            margin: 0;
+            border-radius: 4px;
+            line-height: 1;
+            opacity: 0.45;
+            transition: opacity 0.15s, background 0.15s;
+            color: #333;
+        }
+        button.vote-btn:hover { opacity: 1; background: #eef4ff; }
+        button.vote-btn.active-up { opacity: 1; background: #d4edda; }
+        button.vote-btn.active-down { opacity: 1; background: #f8d7da; }
+        .vote-score {
+            font-size: 12px;
+            color: #666;
+            min-width: 20px;
+            text-align: center;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+        .vote-score.positive { color: #28a745; }
+        .vote-score.negative { color: #dc3545; }
+
+        .profile-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .profile-card .profile-row { margin: 10px 0; font-size: 15px; }
+        .profile-card .profile-row strong {
+            color: #555; display: inline-block; min-width: 160px;
+        }
+
+        .profile-subsection {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .profile-subsection h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #444;
+        }
+        .profile-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .profile-list-item {
+            padding: 8px 10px;
+            margin: 6px 0;
+            border-left: 3px solid #b6d8ff;
+            background: #f5faff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .profile-list-item .profile-link {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .profile-list-item .profile-link:hover { text-decoration: underline; }
+        .profile-list-item .profile-excerpt {
+            display: block;
+            color: #555;
+            margin-top: 4px;
+            font-size: 13px;
+            word-break: break-word;
+        }
+        .profile-list-item .profile-date {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .profile-empty {
+            color: #888;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .ban-item {
+            padding: 10px 12px;
+            margin: 8px 0;
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .ban-item .ban-info {
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .ban-item .ban-reason {
+            color: #555;
+            font-style: italic;
+            margin: 4px 0;
+        }
+        .ban-item .ban-dates {
+            color: #888;
+            font-size: 12px;
+        }
+        .ban-item button {
+            margin-top: 8px;
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .mod-panel {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px dashed #bbb;
+            border-radius: 6px;
+            background: #fffdf5;
+        }
+        .mod-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #856404;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .mod-panel .row-buttons {
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+        .mod-panel select {
+            width: auto; min-width: 180px; margin: 0;
+        }
+        .mod-panel button { margin: 0; padding: 8px 14px; }
+
+        .comment-del-btn {
+            padding: 2px 8px !important;
+            font-size: 11px !important;
+            margin: 0 0 0 8px !important;
+            border-radius: 3px;
+            color: #fff;
+        }
+        .reply-btn {
+            background: #17a2b8 !important;
+        }
+        .reply-btn:hover {
+            background: #117a8b !important;
+        }
+
+        .inline-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #212529;
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+        }
+        .inline-badge.banned-badge {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .profile-header h2 { margin: 0; border: none; padding: 0; }
+        .profile-header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .form-actions button {
+            flex: 0 0 auto;
+            min-width: 130px;
+            margin: 0;
+            padding: 10px 20px;
+        }
+
+        .reply-form {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #ddd;
+        }
+        .reply-form textarea {
+            width: 100%;
+        }
+
+        /* модальные окна */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 25px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h2 {
+            margin: 0 0 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .modal label {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .modal p {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        .modal .roles-current {
+            margin: 10px 0 5px 0;
+            padding: 8px 12px;
+            background: #f0f8ff;
+            border-left: 3px solid #007bff;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+        .modal .roles-current strong { color: #0056b3; }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        .modal .modal-actions button {
+            min-width: 120px;
+            margin: 0;
+        }
+
+        .modal .radio-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+        .modal .radio-row input[type="radio"],
+        .modal .radio-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            flex-shrink: 0;
+        }
+        .modal .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 12px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            padding: 8px 12px;
+            border: 1px solid #f0d8d8;
+            background: #fff8f8;
+            border-radius: 4px;
+        }
+        .modal .checkbox-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            flex-shrink: 0;
+        }
+        .modal .role-section {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+        .modal .role-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .profile-header { flex-direction: column; align-items: flex-start; }
+            .profile-header-actions { width: 100%; }
+            .profile-header-actions button { flex: 1; }
+            .modal .modal-actions { flex-direction: column; }
+            .modal .modal-actions button { width: 100%; }
+        }
