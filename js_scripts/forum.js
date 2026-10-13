@@ -416,8 +416,6 @@ function renderPosts() {
         ? posts.slice()
         : posts.filter(p => p.subforumId === currentSubforumId);
 
-    visible.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-
     if (visible.length === 0) {
         container.innerHTML = '<p>Постов пока нет.</p>';
         return;
@@ -720,7 +718,7 @@ async function deleteCurrentPost() {
     }
 }
 
-// ---- комментарии ----
+// комментарии
 async function loadComments(postId, canModerate) {
     const list = document.getElementById('commentsList');
     list.innerHTML = '<p>Загрузка комментариев...</p>';
@@ -770,12 +768,6 @@ async function loadComments(postId, canModerate) {
                 roots.push(node);
             }
         });
-
-        const sortByRating = arr => {
-            arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            arr.forEach(n => sortByRating(n.children));
-        };
-        sortByRating(roots);
 
         const currentUserId = getCurrentUserId();
         list.innerHTML = '';
