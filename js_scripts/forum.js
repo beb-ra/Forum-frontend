@@ -142,7 +142,6 @@ async function createSubforum() {
         nameEl.value = '';
         descEl.value = '';
         closeCreateSubforumModal();
-        showMessage('Подфорум создан!', false);
         await loadSubforums();
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -210,7 +209,7 @@ async function deleteSubforum(id, name) {
     }
 }
 
-// ---- теги ----
+// теги
 async function loadTags() {
     try {
         const res = await fetch(`${API_URL}/api/tags`);
@@ -422,29 +421,31 @@ function renderPosts() {
     }
 
     visible.forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'post';
+    const div = document.createElement('div');
+    div.className = 'post' + (p.isPinned ? ' pinned' : '');
 
-        const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
-        const tag = p.tagId != null ? tagName(p.tagId) : null;
+    const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
+    const tag = p.tagId != null ? tagName(p.tagId) : null;
 
-        div.innerHTML = `
-            <h3>
-                <a class="post-title-link" href="?post=${p.postId}">
-                    ${escapeHtml(p.title)}
-                </a>
-            </h3>
-            <p>${escapeHtml(p.content)}</p>
-            <div class="post-meta">
-                Автор:
-                <a class="author-link" href="?profile=${p.authorId}">
-                    ${escapeHtml(author)}
-                </a>
-                ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
-                ${renderVoteControls('post', p.postId, p.rating ?? 0)}
-            </div>
-        `;
-        container.appendChild(div);
+    div.innerHTML = `
+        <h3>
+            ${p.isPinned ? '<span class="badge-pin" title="Закреплено">📌</span>' : ''}
+            ${p.isClosed ? '<span class="badge-closed" title="Закрыто">🔒</span>' : ''}
+            <a class="post-title-link" href="?post=${p.postId}">
+                ${escapeHtml(p.title)}
+            </a>
+        </h3>
+        <p>${escapeHtml(p.content)}</p>
+        <div class="post-meta">
+            Автор:
+            <a class="author-link" href="?profile=${p.authorId}">
+                ${escapeHtml(author)}
+            </a>
+            ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
+            ${renderVoteControls('post', p.postId, p.rating ?? 0)}
+        </div>
+    `;
+    container.appendChild(div);
     });
 }
 
@@ -484,14 +485,12 @@ async function createPost() {
 
         document.getElementById('postTitle').value = '';
         document.getElementById('postContent').value = '';
-        showMessage('Пост создан!', false);
         loadPosts();
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
 }
 
-// ---- страница поста ----
 async function showPostDetail(postId) {
     showPostDetailSection();
     currentPostId = parseInt(postId, 10);
@@ -536,6 +535,8 @@ async function showPostDetail(postId) {
         let html = `
             <h2>${escapeHtml(p.title)}</h2>
             <div class="post-meta" style="margin-bottom: 10px;">
+                ${p.isPinned ? '<span class="badge-pin" title="Закреплено">📌 Закреплено</span>' : ''}
+                ${p.isClosed ? '<span class="badge-closed" title="Закрыто">🔒 Закрыто</span>' : ''}
                 Автор:
                 <a class="author-link" href="?profile=${p.authorId}">
                     ${escapeHtml(author)}
@@ -564,6 +565,16 @@ async function showPostDetail(postId) {
                 html += `<button onclick="startEditPost()">Редактировать</button>`;
             }
 
+            if (canMod) {
+                html += `<button class="pin-toggle${p.isPinned ? ' active' : ''}"
+                                 title="${p.isPinned ? 'Открепить' : 'Закрепить'}"
+                                 onclick="togglePostPinned()">📌</button>`;
+
+                html += `<button class="close-toggle${p.isClosed ? ' active' : ''}"
+                                 title="${p.isClosed ? 'Открыть пост' : 'Закрыть пост'}"
+                                 onclick="togglePostClosed()">${p.isClosed ? '🔒' : '🔓'}</button>`;
+            }
+
             if (canMod && Object.keys(tagsCache).length > 0) {
                 const options = Object.entries(tagsCache).map(([id, name]) =>
                     `<option value="${id}" ${String(p.tagId) === String(id) ? 'selected' : ''}>${escapeHtml(name)}</option>`
@@ -586,7 +597,8 @@ async function showPostDetail(postId) {
 
         container.innerHTML = html;
 
-        document.getElementById('commentFormContainer').style.display = token ? 'block' : 'none';
+        document.getElementById('commentFormContainer').style.display =
+            (token && !p.isClosed) ? 'block' : 'none';
 
         await loadComments(currentPostId, canMod);
     } catch (e) {
@@ -652,7 +664,6 @@ async function saveEditedPost() {
             return;
         }
 
-        showMessage('Пост обновлён!', false);
         await showPostDetail(currentPostId);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -687,7 +698,6 @@ async function savePostTag() {
             return;
         }
 
-        showMessage('Тег обновлён!', false);
         await showPostDetail(currentPostId);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -711,7 +721,6 @@ async function deleteCurrentPost() {
             return;
         }
 
-        showMessage('Пост удалён', false);
         setTimeout(() => { window.location.href = window.location.pathname; }, 500);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -772,10 +781,16 @@ async function loadComments(postId, canModerate) {
         const currentUserId = getCurrentUserId();
         list.innerHTML = '';
 
+	if (currentPost && currentPost.isClosed) {
+    		const note = document.createElement('div');
+    		note.className = 'closed-note';
+    		list.appendChild(note);
+	}
+
         const renderNode = (node, depth) => {
             const div = document.createElement('div');
             div.id = 'comment-' + node.commentId;
-            div.className = 'comment';
+            div.className = 'comment' + (node.isPinned ? ' pinned' : '');
             if (depth > 0) div.style.marginLeft = (depth * 24) + 'px';
 
             if (node.isDeleted) {
@@ -786,6 +801,11 @@ async function loadComments(postId, canModerate) {
                 const isAuthor = currentUserId != null && node.authorId === currentUserId;
                 const canDelete = canModerate || isAuthor;
 
+		const postAuthorId = currentPost ? currentPost.authorId : null;
+		const isPostAuthorUser = currentUserId != null && currentUserId === postAuthorId;
+		const pinBtn = isPostAuthorUser ? `<button class="pin-btn${node.isPinned ? ' active' : ''}"
+             	title="${node.isPinned ? 'Открепить' : 'Закрепить'}"
+             	onclick="toggleCommentPinned(${node.commentId})">📌</button>` : '';
                 const replyBtn = `<button class="comment-del-btn reply-btn" onclick="startReply(${node.commentId})">Ответить</button>`;
                 const editBtn = isAuthor
                     ? `<button class="logout comment-del-btn" onclick="startEditComment(${node.commentId})">Изменить</button>`
@@ -794,13 +814,14 @@ async function loadComments(postId, canModerate) {
                     ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
                     : '';
 
-                div.innerHTML = `
+                                div.innerHTML = `
                     <div class="comment-meta">
                         <a class="author-link" href="?profile=${node.authorId}">
                             <strong>${escapeHtml(author)}</strong>
                         </a>
                         · ${formatDate(node.creationDate)}
                         ${renderVoteControls('comment', node.commentId, node.rating ?? 0)}
+                        ${pinBtn}
                         ${replyBtn}
                         ${editBtn}
                         ${delBtn}
@@ -888,7 +909,6 @@ async function submitReply(parentCommentId) {
             return;
         }
 
-        showMessage('Ответ добавлен!', false);
         await loadComments(pid, currentPostCanModerate);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -954,7 +974,6 @@ async function saveEditedComment(commentId) {
             return;
         }
 
-        showMessage('Комментарий обновлён!', false);
         await loadComments(currentPostId, currentPostCanModerate);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -978,7 +997,6 @@ async function deleteCommentById(id) {
             return;
         }
 
-        showMessage('Комментарий удалён', false);
         await loadComments(currentPostId, currentPostCanModerate);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -1030,8 +1048,95 @@ async function submitComment() {
         }
 
         contentEl.value = '';
-        showMessage('Комментарий добавлен!', false);
         await loadComments(pid, currentPostCanModerate);
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
+}
+
+async function togglePostPinned() {
+    const token = getToken();
+    if (!token) { showMessage('Сначала войдите'); return; }
+    if (!currentPost) return;
+
+    const newValue = !currentPost.isPinned;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ ...currentPost, isPinned: newValue })
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка закрепления: ' + res.status);
+            return;
+        }
+
+        currentPost.isPinned = newValue;
+        await showPostDetail(currentPostId);
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
+}
+
+async function togglePostClosed() {
+    const token = getToken();
+    if (!token) { showMessage('Сначала войдите'); return; }
+    if (!currentPost) return;
+
+    const newValue = !currentPost.isClosed;
+
+    try {
+        const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ ...currentPost, isClosed: newValue })
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка: ' + res.status);
+            return;
+        }
+
+        currentPost.isClosed = newValue;
+        await showPostDetail(currentPostId);
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
+}
+
+async function toggleCommentPinned(commentId) {
+    const token = getToken();
+    if (!token) { showMessage('Сначала войдите'); return; }
+
+    const c = currentComments.find(x => x.commentId === commentId);
+    if (!c) return;
+
+    const newValue = !c.isPinned;
+
+    try {
+        const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ ...c, isPinned: newValue })
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка: ' + res.status);
+            return;
+        }
+
+        await loadComments(currentPostId, currentPostCanModerate);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }

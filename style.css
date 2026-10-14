@@ -438,6 +438,63 @@
             margin-top: 4px;
         }
 
+.mod-panel .pin-toggle,
+.mod-panel .close-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 6px 12px;
+    margin: 0;
+    border-radius: 4px;
+    line-height: 1;
+    min-width: 44px;
+    opacity: 0.35;
+    transition: opacity 0.15s, background 0.15s, transform 0.15s;
+}
+
+.mod-panel .pin-toggle:hover,
+.mod-panel .close-toggle:hover {
+    opacity: 1;
+    background: #fff3cd;
+}
+
+.mod-panel .pin-toggle.active {
+    opacity: 1;
+    background: #ffe69c;
+    box-shadow: 0 0 0 1px #e0a800 inset;
+}
+
+.mod-panel .close-toggle.active {
+    opacity: 1;
+    background: #d6d8db;
+    box-shadow: 0 0 0 1px #6c757d inset;
+}
+
+button.pin-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 8px;
+    margin: 0 0 0 4px;
+    border-radius: 3px;
+    line-height: 1;
+    opacity: 0.35;
+    transition: opacity 0.15s, background 0.15s, transform 0.15s;
+}
+
+button.pin-btn:hover {
+    opacity: 1;
+    background: #fff3cd;
+}
+
+button.pin-btn.active {
+    opacity: 1;
+    background: #ffe69c;
+    box-shadow: 0 0 0 1px #e0a800 inset;
+}
+
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }
