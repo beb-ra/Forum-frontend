@@ -19,7 +19,6 @@
                 document.getElementById('loginEmail').value = '';
                 document.getElementById('loginPassword').value = '';
 
-                showMessage('Вход выполнен!', false);
                 showApp();
             } catch (e) {
                 showMessage('Ошибка: ' + e.message);
@@ -49,7 +48,6 @@
                 document.getElementById('regEmail').value = '';
                 document.getElementById('regPassword').value = '';
 
-                showMessage('Регистрация успешна!', false);
                 showApp();
             } catch (e) {
                 showMessage('Ошибка: ' + e.message);
@@ -61,5 +59,4 @@
             currentSubforumId = null;
             votes = [];
             showLogin();
-            showMessage('Вы вышли', false);
         }

@@ -438,6 +438,16 @@
             margin-top: 4px;
         }
 
+	.role-checkboxes {
+    	max-height: 200px;
+    	overflow-y: auto;
+    	border: 1px solid #ddd;
+    	border-radius: 4px;
+    	padding: 8px;
+    	margin-top: 5px;
+    	background: #fafafa;
+	}
+
 .mod-panel .pin-toggle,
 .mod-panel .close-toggle {
     background: none;

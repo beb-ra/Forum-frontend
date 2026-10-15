@@ -237,7 +237,7 @@ async function deleteOwnAccount(uid) {
     }
 }
 
-// ---- роли ----
+// роли
 async function loadRolesList() {
     if (rolesList.length > 0) return;
     const token = getToken();
@@ -263,29 +263,28 @@ async function openRolesModal(profileId, username) {
     }
 
     currentRolesProfileId = profileId;
-
     document.getElementById('rolesUserName').textContent = username || ('ID ' + profileId);
 
-    const subSel = document.getElementById('roleSubforumId');
-    subSel.innerHTML = '';
+    const list = document.getElementById('moderatorSubforumsList');
+    list.innerHTML = '';
+
     if (subforums.length === 0) {
-        const o = document.createElement('option');
-        o.value = '';
-        o.textContent = '— нет подфорумов —';
-        subSel.appendChild(o);
+        list.innerHTML = '<p class="role-hint">Нет подфорумов</p>';
     } else {
         subforums.forEach(s => {
-            const o = document.createElement('option');
-            o.value = s.id;
-            o.textContent = s.name;
-            subSel.appendChild(o);
+            const label = document.createElement('label');
+            label.className = 'radio-row';
+            label.innerHTML = `
+                <input type="checkbox" value="${s.id}" />
+                <span>${escapeHtml(s.name)}</span>
+            `;
+            list.appendChild(label);
         });
     }
 
     document.getElementById('rolesModal').classList.add('open');
     document.getElementById('moderatorSubforumBlock').style.display = 'none';
     document.getElementById('rolesCurrentInfo').textContent = 'Текущие полномочия: загрузка...';
-
     setRoleRadio('user');
 
     await loadRolesList();
@@ -321,12 +320,13 @@ async function openRolesModal(profileId, username) {
 
     if (hasAdmin) {
         setRoleRadio('admin');
+        list.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
     } else if (moderatorRoles.length > 0) {
         setRoleRadio('moderator');
-        const firstSubId = moderatorRoles[0].subforumId;
-        if (subforums.some(s => s.id === firstSubId)) {
-            subSel.value = String(firstSubId);
-        }
+        const modIds = moderatorRoles.map(mr => String(mr.subforumId));
+        list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.checked = modIds.includes(cb.value);
+        });
         document.getElementById('moderatorSubforumBlock').style.display = 'block';
     } else {
         setRoleRadio('user');
@@ -364,6 +364,17 @@ async function saveUserRoles() {
     if (!selected) { showMessage('Выберите роль'); return; }
     const roleValue = selected.value;
 
+    let selectedSubforumIds = [];
+    if (roleValue === 'moderator') {
+        const boxes = document.querySelectorAll('#moderatorSubforumsList input[type="checkbox"]:checked');
+        selectedSubforumIds = [...boxes].map(cb => parseInt(cb.value, 10)).filter(id => !isNaN(id));
+
+        if (selectedSubforumIds.length === 0) {
+            showMessage('Выберите хотя бы один подфорум');
+            return;
+        }
+    }
+
     let existingRoles = [];
     try {
         const res = await fetch(`${API_URL}/api/subforumroles`, {
@@ -384,29 +395,31 @@ async function saveUserRoles() {
         } catch (e) { }
     }
 
-    if (roleValue !== 'user') {
-        await loadRolesList();
+    if (roleValue === 'user') {
+        closeRolesModal();
+        showMessage('Полномочия обновлены', false);
+        return;
+    }
 
-        let roleId = null;
-        let subforumId = null;
+    await loadRolesList();
 
-        if (roleValue === 'admin') {
-            roleId = getRoleIdByName('Admin');
-        } else if (roleValue === 'moderator') {
-            roleId = getRoleIdByName('Moderator');
-            const subSel = document.getElementById('roleSubforumId');
-            subforumId = parseInt(subSel.value, 10);
-            if (!subforumId || isNaN(subforumId)) {
-                showMessage('Выберите подфорум для модератора');
-                return;
-            }
-        }
+    let roleId = null;
+    if (roleValue === 'admin') {
+        roleId = getRoleIdByName('Admin');
+    } else if (roleValue === 'moderator') {
+        roleId = getRoleIdByName('Moderator');
+    }
 
-        if (roleId == null) {
-            showMessage('Не удалось определить роль на сервере');
-            return;
-        }
+    if (roleId == null) {
+        showMessage('Не удалось определить роль на сервере');
+        return;
+    }
 
+    const entriesToCreate = roleValue === 'admin'
+        ? [{ subforumId: null }]
+        : selectedSubforumIds.map(sid => ({ subforumId: sid }));
+
+    for (const entry of entriesToCreate) {
         try {
             const res = await fetch(`${API_URL}/api/subforumroles`, {
                 method: 'POST',
@@ -416,7 +429,7 @@ async function saveUserRoles() {
                 },
                 body: JSON.stringify({
                     userId: profileId,
-                    subforumId: subforumId,
+                    subforumId: entry.subforumId,
                     roleId: roleId
                 })
             });
@@ -437,7 +450,7 @@ async function saveUserRoles() {
     showMessage('Полномочия обновлены', false);
 }
 
-// ---- баны ----
+// баны
 function canCurrentUserBan() {
     if (isGlobalAdmin()) return true;
     return getModeratedSubforumIds().length > 0;
