@@ -170,7 +170,8 @@ async function deleteSubforum(id, name) {
             showMessage('Не удалось получить список постов: ' + postsRes.status);
             return;
         }
-        const allPosts = await postsRes.json();
+        const data = await postsRes.json();
+        const allPosts = data.items || [];
         const postsToDelete = allPosts.filter(p =>
             p.subforumId === id && !p.isDeleted
         );
@@ -442,7 +443,6 @@ function renderPosts() {
         container.appendChild(div);
     });
 
-    // отрисовка кнопок пагинации
     if (totalPostsPages > 1) {
         const pag = document.createElement('div');
         pag.className = 'pagination';
@@ -744,7 +744,6 @@ async function deleteCurrentPost() {
     }
 }
 
-// функция для генерации HTML одного комментария
 function createCommentElement(node) {
     const wrapper = document.createElement('div');
     wrapper.id = 'comment-wrapper-' + node.commentId;
@@ -887,7 +886,6 @@ async function loadReplies(commentId, btnElement, containerElement) {
         if (!res.ok) throw new Error('Ошибка при загрузке ответов');
         
         const data = await res.json();
-        console.log("Полученные ответы:", data.items);
         containerElement.innerHTML = '';
 
         if (data.items.length === 0) {
@@ -1095,7 +1093,6 @@ async function submitComment() {
     }
 }
 
-// закрепление / закрытие
 async function togglePostPinned() {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }

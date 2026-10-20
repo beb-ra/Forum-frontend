@@ -1,4 +1,3 @@
-// ---- показ профиля ----
 async function showProfilePage(profileId) {
     showProfileSection();
 
@@ -53,19 +52,18 @@ async function showProfilePage(profileId) {
             <div class="profile-row"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
         `;
         if (isOwn) {
-    html += `
-        <div class="profile-row">
-            <strong>Email:</strong> ${escapeHtml(u.email ?? '—')}
-            <button class="small-btn" onclick="openEmailModal()">Изменить</button>
-        </div>
-        <div class="profile-row">
-            <strong>Пароль:</strong> ••••••••
-            <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
-        </div>
-    `;
-}
+            html += `
+                <div class="profile-row">
+                    <strong>Email:</strong> ${escapeHtml(u.email ?? '—')}
+                    <button class="small-btn" onclick="openEmailModal()">Изменить</button>
+                </div>
+                <div class="profile-row">
+                    <strong>Пароль:</strong> ••••••••
+                    <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
+                </div>
+            `;
+        }
 
-        // Посты и комментарии пользователя
         let userPosts = [];
         let userComments = [];
         let postsById = {};
@@ -77,7 +75,9 @@ async function showProfilePage(profileId) {
             ]);
 
             if (postsRes.ok) {
-                const allPosts = await postsRes.json();
+                const data = await postsRes.json();
+                const allPosts = data.items || [];
+                
                 allPosts.forEach(p => {
                     postsById[p.postId] = {
                         title: p.title,
@@ -91,7 +91,9 @@ async function showProfilePage(profileId) {
             }
 
             if (commentsRes.ok) {
-                const allComments = await commentsRes.json();
+                const data = await commentsRes.json();
+                const allComments = data.items || [];
+                
                 userComments = allComments
                     .filter(c => !c.isDeleted && c.authorId === profileId)
                     .sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate))
@@ -99,7 +101,6 @@ async function showProfilePage(profileId) {
             }
         } catch (_) { }
 
-        // Блок «Активные баны» (для админа)
         const userBans = await loadUserBans(profileId);
         if (isGlobalAdmin() && userBans.length > 0) {
             html += `<div class="profile-subsection">
@@ -183,7 +184,6 @@ async function showProfilePage(profileId) {
 
         content.innerHTML = html;
 
-        // Кнопки в шапке профиля
         if (isOwn) {
             logoutBtn.style.display = 'inline-block';
             deleteAccountBtn.style.display = 'inline-block';
@@ -203,7 +203,6 @@ async function showProfilePage(profileId) {
     }
 }
 
-// ---- удаление своего аккаунта ----
 function askDeleteOwnAccount() {
     const uid = getCurrentUserId();
     if (uid == null) { showMessage('Вы не авторизованы'); return; }
@@ -246,7 +245,6 @@ async function deleteOwnAccount(uid) {
     }
 }
 
-// роли
 async function loadRolesList() {
     if (rolesList.length > 0) return;
     const token = getToken();
@@ -353,7 +351,6 @@ function closeRolesModal() {
     currentRolesProfileId = null;
 }
 
-// слушатель переключения ролей
 document.querySelectorAll('input[name="roleOption"]').forEach(r => {
     r.addEventListener('change', () => {
         const block = document.getElementById('moderatorSubforumBlock');
@@ -459,7 +456,6 @@ async function saveUserRoles() {
     showMessage('Полномочия обновлены', false);
 }
 
-// баны
 function canCurrentUserBan() {
     if (isGlobalAdmin()) return true;
     return getModeratedSubforumIds().length > 0;
@@ -522,7 +518,6 @@ function closeBanModal() {
     currentBanProfileId = null;
 }
 
-// слушатель переключения области бана
 document.querySelectorAll('input[name="banScope"]').forEach(r => {
     r.addEventListener('change', () => {
         const block = document.getElementById('banSubforumBlock');
@@ -542,8 +537,10 @@ async function deleteUserContent(userId) {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (res.ok) {
-            const all = await res.json();
-            const userPosts = all.filter(p => p.authorId === userId && !p.isDeleted);
+            const data = await res.json();
+            const allPosts = data.items || [];
+            
+            const userPosts = allPosts.filter(p => p.authorId === userId && !p.isDeleted);
             for (const p of userPosts) {
                 const r = await fetch(`${API_URL}/api/posts/${p.postId}`, {
                     method: 'DELETE',
@@ -557,8 +554,10 @@ async function deleteUserContent(userId) {
     try {
         const res = await fetch(`${API_URL}/api/comments`);
         if (res.ok) {
-            const all = await res.json();
-            const userComments = all.filter(c => c.authorId === userId && !c.isDeleted);
+            const data = await res.json();
+            const allComments = data.items || [];
+            
+            const userComments = allComments.filter(c => c.authorId === userId && !c.isDeleted);
             for (const c of userComments) {
                 const r = await fetch(`${API_URL}/api/comments/${c.commentId}`, {
                     method: 'DELETE',
@@ -725,10 +724,9 @@ async function unbanUser(banId) {
     }
 }
 
-// смена почты
 function openEmailModal() {
     document.getElementById('newEmailInput').value = '';
-    document.getElementById('emailPasswordInput').value = ''; // очищаем поле пароля
+    document.getElementById('emailPasswordInput').value = '';
     document.getElementById('emailModal').classList.add('open');
     setTimeout(() => document.getElementById('newEmailInput').focus(), 50);
 }
@@ -784,7 +782,6 @@ async function saveEmail() {
     }
 }
 
-// смена пароля
 function openPasswordModal() {
     document.getElementById('currentPasswordInput').value = '';
     document.getElementById('newPasswordInput').value = '';
