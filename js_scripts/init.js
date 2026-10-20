@@ -5,6 +5,8 @@ document.addEventListener('keydown', e => {
         closeConfirmModal();
         closeRolesModal();
         closeBanModal();
+	closeEmailModal();
+        closePasswordModal();
     }
 });
 

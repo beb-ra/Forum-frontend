@@ -6,10 +6,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="topbar">
-        <h1>Forum Frontend</h1>
+    <header class="topbar">
+        <h1>Forum</h1>
         <button class="profile-btn" title="Профиль" onclick="openOwnProfile()">👤</button>
-    </div>
+    </header>
 
     <div id="message"></div>
 
@@ -217,6 +217,42 @@
             <div class="modal-actions">
                 <button class="danger" onclick="saveBan()">Забанить</button>
                 <button class="logout" onclick="closeBanModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно смена почты -->
+    <div id="emailModal" class="modal-overlay" onclick="if(event.target===this) closeEmailModal()">
+        <div class="modal">
+            <h2>Изменить Email</h2>
+            
+            <label for="newEmailInput">Новый Email:</label>
+            <input id="newEmailInput" type="email" placeholder="Введите новый email">
+
+            <label for="emailPasswordInput">Пароль для подтверждения:</label>
+            <input id="emailPasswordInput" type="password" placeholder="Введите пароль">
+
+            <div class="modal-actions">
+                <button class="success" onclick="saveEmail()">Сохранить</button>
+                <button class="logout" onclick="closeEmailModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно смена Пароля -->
+    <div id="passwordModal" class="modal-overlay" onclick="if(event.target===this) closePasswordModal()">
+        <div class="modal">
+            <h2>Изменить Пароль</h2>
+            
+            <label for="currentPasswordInput">Текущий пароль:</label>
+            <input id="currentPasswordInput" type="password" placeholder="Введите текущий пароль">
+
+            <label for="newPasswordInput">Новый пароль:</label>
+            <input id="newPasswordInput" type="password" placeholder="Введите новый пароль">
+
+            <div class="modal-actions">
+                <button class="success" onclick="savePassword()">Сохранить</button>
+                <button class="logout" onclick="closePasswordModal()">Отмена</button>
             </div>
         </div>
     </div>

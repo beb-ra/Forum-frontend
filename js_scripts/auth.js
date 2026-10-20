@@ -30,6 +30,17 @@
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
 
+	    if (!username || !email || !password) {
+        	showMessage('Заполните все поля');
+        	return;
+    	    }
+
+    	    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    	    if (!emailRegex.test(email)) {
+        	showMessage('Введите корректный адрес электронной почты');
+        	return;
+    	    }
+
             try {
                 const res = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',

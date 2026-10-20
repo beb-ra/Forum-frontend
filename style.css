@@ -505,6 +505,21 @@ button.pin-btn.active {
     box-shadow: 0 0 0 1px #e0a800 inset;
 }
 
+.small-btn {
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 10px;
+    background: #e7f3ff;
+    color: #0056b3;
+    border: 1px solid #b6d8ff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.small-btn:hover {
+    background: #d0e6ff;
+}
+
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }

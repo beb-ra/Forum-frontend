@@ -53,8 +53,17 @@ async function showProfilePage(profileId) {
             <div class="profile-row"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
         `;
         if (isOwn) {
-            html += `<div class="profile-row"><strong>Email:</strong> ${escapeHtml(u.email ?? '—')}</div>`;
-        }
+    html += `
+        <div class="profile-row">
+            <strong>Email:</strong> ${escapeHtml(u.email ?? '—')}
+            <button class="small-btn" onclick="openEmailModal()">Изменить</button>
+        </div>
+        <div class="profile-row">
+            <strong>Пароль:</strong> ••••••••
+            <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
+        </div>
+    `;
+}
 
         // Посты и комментарии пользователя
         let userPosts = [];
@@ -713,5 +722,110 @@ async function unbanUser(banId) {
         if (!isNaN(pid)) await showProfilePage(pid);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
+    }
+}
+
+// смена почты
+function openEmailModal() {
+    document.getElementById('newEmailInput').value = '';
+    document.getElementById('emailPasswordInput').value = ''; // очищаем поле пароля
+    document.getElementById('emailModal').classList.add('open');
+    setTimeout(() => document.getElementById('newEmailInput').focus(), 50);
+}
+
+function closeEmailModal() {
+    document.getElementById('emailModal').classList.remove('open');
+}
+
+async function saveEmail() {
+    const token = getToken();
+    if (!token) return;
+
+    const newEmail = document.getElementById('newEmailInput').value.trim();
+    const currentPassword = document.getElementById('emailPasswordInput').value;
+
+    if (!newEmail || !currentPassword) {
+        showMessage('Заполните новый email и текущий пароль');
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+        showMessage('Введите корректный адрес электронной почты');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/users/me/email`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ currentPassword, newEmail })
+        });
+
+        if (res.ok) {
+            closeEmailModal();
+            showMessage('Email успешно изменён!', false);
+            const currentId = getCurrentUserId();
+            await showProfilePage(currentId);
+        } else if (res.status === 409) {
+            showMessage('Этот email уже занят');
+        } else if (res.status === 400) {
+            const text = await res.text();
+            showMessage(text || 'Неверный пароль');
+        } else {
+            const text = await res.text();
+            showMessage(`Ошибка: ${text || res.status}`);
+        }
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
+}
+
+// смена пароля
+function openPasswordModal() {
+    document.getElementById('currentPasswordInput').value = '';
+    document.getElementById('newPasswordInput').value = '';
+    document.getElementById('passwordModal').classList.add('open');
+    setTimeout(() => document.getElementById('currentPasswordInput').focus(), 50);
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').classList.remove('open');
+}
+
+async function savePassword() {
+    const token = getToken();
+    if (!token) return;
+
+    const currentPassword = document.getElementById('currentPasswordInput').value;
+    const newPassword = document.getElementById('newPasswordInput').value;
+
+    if (!currentPassword || !newPassword) {
+        showMessage('Заполните оба поля');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/users/me/password`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        if (res.ok) {
+            closePasswordModal();
+            showMessage('Пароль успешно изменён!', false);
+        } else {
+            const text = await res.text();
+            showMessage(`Ошибка: ${text || res.status}`);
+        }
+    } catch (e) {
+        showMessage('Ошибка сети: ' + e.message);
     }
 }
