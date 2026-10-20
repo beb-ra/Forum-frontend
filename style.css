@@ -520,6 +520,83 @@ button.pin-btn.active {
     background: #d0e6ff;
 }
 
+.pagination {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.pagination button {
+    padding: 6px 12px;
+    background: #f9f9f9;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0;
+}
+.pagination button:hover {
+    background: #e9f2ff;
+}
+.pagination button.active {
+    background: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f9f9f9;
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+.pagination button {
+    background: #f9f9f9;
+    color: #333;
+    border: 1px solid #ccc;
+}
+.pagination button:hover { background: #e9f2ff; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.load-more-btn {
+    display: block;
+    width: 100%;
+    background: #f0f8ff;
+    border: 1px solid #b6d8ff;
+    color: #0056b3;
+    padding: 10px;
+    margin: 15px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+}
+.load-more-btn:hover { background: #d0e6ff; }
+
+.show-replies-btn {
+    background: none;
+    border: none;
+    color: #0056b3;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    margin-left: 10px;
+    display: inline-block;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+}
+.show-replies-btn:hover {
+    background: #e9f2ff;
+    text-decoration: underline;
+    color: #0056b3;
+}
+
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }

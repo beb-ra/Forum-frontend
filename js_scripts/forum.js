@@ -1,4 +1,3 @@
-// ---- подфорумы ----
 async function loadSubforums() {
     const token = getToken();
     try {
@@ -64,9 +63,10 @@ function makeSubforumItem(name, id) {
 
     li.onclick = () => {
         currentSubforumId = id;
+        currentPostsPage = 1;
         renderSubforums();
         renderSubforumSelect();
-        renderPosts();
+        loadPosts();
     };
     return li;
 }
@@ -197,9 +197,7 @@ async function deleteSubforum(id, name) {
         if (currentSubforumId === id) currentSubforumId = null;
 
         if (failed > 0) {
-            showMessage(`Подфорум удалён, но ${failed} пост(ов) удалить не удалось`);
-        } else {
-            showMessage(`Подфорум «${name}» удалён`, false);
+            showMessage(`Подфорум удален, но ${failed} пост(ов) удалить не удалось`);
         }
 
         await loadSubforums();
@@ -209,7 +207,6 @@ async function deleteSubforum(id, name) {
     }
 }
 
-// теги
 async function loadTags() {
     try {
         const res = await fetch(`${API_URL}/api/tags`);
@@ -231,7 +228,6 @@ function tagName(id) {
     return tagsCache[id] || ('Тег ' + id);
 }
 
-// ---- пользователи (кэш имён) ----
 async function getUsername(userId) {
     if (userId == null) return '—';
     if (usersCache[userId]) return usersCache[userId];
@@ -252,7 +248,6 @@ async function ensureUsernamesLoaded(ids) {
     await Promise.all(uniq.map(id => getUsername(id)));
 }
 
-// ---- голоса ----
 async function loadVotes() {
     try {
         const res = await fetch(`${API_URL}/api/votes`);
@@ -333,7 +328,7 @@ async function voteComment(commentId, value) {
 
     const newScore = computeScore('comment', commentId);
 
-    const c = currentComments.find(x => x.commentId === commentId);
+    const c = currentCommentsList.find(x => x.commentId === commentId);
     if (c) c.rating = newScore;
 
     updateVoteUI('comment', commentId, newScore);
@@ -379,11 +374,13 @@ async function voteOnTarget(type, id, value) {
     }
 }
 
-// ---- посты ----
 async function loadPosts() {
     const token = getToken();
     try {
-        const res = await fetch(`${API_URL}/api/posts`, {
+        let url = `${API_URL}/api/posts?page=${currentPostsPage}&pageSize=${postsPerPage}`;
+        if (currentSubforumId !== null) url += `&subforumId=${currentSubforumId}`;
+
+        const res = await fetch(url, {
             headers: token ? { 'Authorization': 'Bearer ' + token } : {}
         });
         if (!res.ok) {
@@ -391,8 +388,9 @@ async function loadPosts() {
             return;
         }
 
-        const all = await res.json();
-        posts = all.filter(p => !p.isDeleted);
+        const data = await res.json();
+        posts = data.items; 
+        totalPostsPages = Math.ceil(data.totalCount / postsPerPage) || 1;
 
         await ensureUsernamesLoaded(posts.map(p => p.authorId));
 
@@ -411,42 +409,56 @@ function renderPosts() {
         ? '(все подфорумы)'
         : '(' + subforumName(currentSubforumId) + ')';
 
-    let visible = currentSubforumId === null
-        ? posts.slice()
-        : posts.filter(p => p.subforumId === currentSubforumId);
-
-    if (visible.length === 0) {
+    if (posts.length === 0) {
         container.innerHTML = '<p>Постов пока нет.</p>';
         return;
     }
 
-    visible.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'post' + (p.isPinned ? ' pinned' : '');
+    posts.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'post' + (p.isPinned ? ' pinned' : '');
 
-    const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
-    const tag = p.tagId != null ? tagName(p.tagId) : null;
+        const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
+        const tag = p.tagId != null ? tagName(p.tagId) : null;
 
-    div.innerHTML = `
-        <h3>
-            ${p.isPinned ? '<span class="badge-pin" title="Закреплено">📌</span>' : ''}
-            ${p.isClosed ? '<span class="badge-closed" title="Закрыто">🔒</span>' : ''}
-            <a class="post-title-link" href="?post=${p.postId}">
-                ${escapeHtml(p.title)}
-            </a>
-        </h3>
-        <p>${escapeHtml(p.content)}</p>
-        <div class="post-meta">
-            Автор:
-            <a class="author-link" href="?profile=${p.authorId}">
-                ${escapeHtml(author)}
-            </a>
-            ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
-            ${renderVoteControls('post', p.postId, p.rating ?? 0)}
-        </div>
-    `;
-    container.appendChild(div);
+        div.innerHTML = `
+            <h3>
+                ${p.isPinned ? '<span class="badge-pin" title="Закреплено">📌</span>' : ''}
+                ${p.isClosed ? '<span class="badge-closed" title="Закрыто">🔒</span>' : ''}
+                <a class="post-title-link" href="?post=${p.postId}">
+                    ${escapeHtml(p.title)}
+                </a>
+            </h3>
+            <p>${escapeHtml(p.content)}</p>
+            <div class="post-meta">
+                Автор:
+                <a class="author-link" href="?profile=${p.authorId}">
+                    ${escapeHtml(author)}
+                </a>
+                ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
+                ${renderVoteControls('post', p.postId, p.rating ?? 0)}
+            </div>
+        `;
+        container.appendChild(div);
     });
+
+    // отрисовка кнопок пагинации
+    if (totalPostsPages > 1) {
+        const pag = document.createElement('div');
+        pag.className = 'pagination';
+        pag.innerHTML = `
+            <button ${currentPostsPage === 1 ? 'disabled' : ''} onclick="changePostsPage(-1)">← Назад</button>
+            <span>Страница ${currentPostsPage} из ${totalPostsPages}</span>
+            <button ${currentPostsPage === totalPostsPages ? 'disabled' : ''} onclick="changePostsPage(1)">Вперед →</button>
+        `;
+        container.appendChild(pag);
+    }
+}
+
+function changePostsPage(delta) {
+    currentPostsPage += delta;
+    loadPosts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function createPost() {
@@ -485,6 +497,8 @@ async function createPost() {
 
         document.getElementById('postTitle').value = '';
         document.getElementById('postContent').value = '';
+        showMessage('Пост создан!', false);
+        currentPostsPage = 1;
         loadPosts();
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -515,7 +529,7 @@ async function showPostDetail(postId) {
         currentPost = p;
 
         if (p.isDeleted) {
-            container.innerHTML = `<p class="error">Этот пост был удалён.</p>`;
+            container.innerHTML = `<p class="error">Этот пост был удален.</p>`;
             document.getElementById('commentFormContainer').style.display = 'none';
             document.getElementById('commentsList').innerHTML = '';
             return;
@@ -600,7 +614,10 @@ async function showPostDetail(postId) {
         document.getElementById('commentFormContainer').style.display =
             (token && !p.isClosed) ? 'block' : 'none';
 
+        currentCommentsPage = 1;
+        currentCommentsList = [];
         await loadComments(currentPostId, canMod);
+
     } catch (e) {
         container.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
     }
@@ -727,123 +744,162 @@ async function deleteCurrentPost() {
     }
 }
 
-// комментарии
-async function loadComments(postId, canModerate) {
+// функция для генерации HTML одного комментария
+function createCommentElement(node) {
+    const wrapper = document.createElement('div');
+    wrapper.id = 'comment-wrapper-' + node.commentId;
+
+    const div = document.createElement('div');
+    div.id = 'comment-' + node.commentId;
+    div.className = 'comment' + (node.isPinned ? ' pinned' : '');
+
+    if (node.isDeleted) {
+        div.classList.add('deleted');
+        div.innerHTML = `<div class="comment-meta">Комментарий удален</div>`;
+        wrapper.appendChild(div);
+        return wrapper;
+    }
+
+    const currentUserId = getCurrentUserId();
+    const author = usersCache[node.authorId] || ('Пользователь ' + node.authorId);
+    const isAuthor = currentUserId != null && node.authorId === currentUserId;
+    const canDelete = currentCommentsCanModerate || isAuthor;
+
+    const postAuthorId = currentPost ? currentPost.authorId : null;
+    const isPostAuthorUser = currentUserId != null && currentUserId === postAuthorId;
+    const pinBtn = isPostAuthorUser
+        ? `<button class="pin-btn${node.isPinned ? ' active' : ''}"
+                 title="${node.isPinned ? 'Открепить' : 'Закрепить'}"
+                 onclick="toggleCommentPinned(${node.commentId})">📌</button>`
+        : '';
+
+    const replyBtn = `<button class="comment-del-btn reply-btn" onclick="startReply(${node.commentId})">Ответить</button>`;
+    const editBtn = isAuthor
+        ? `<button class="logout comment-del-btn" onclick="startEditComment(${node.commentId})">Изменить</button>`
+        : '';
+    const delBtn = canDelete
+        ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
+        : '';
+
+    div.innerHTML = `
+        <div class="comment-meta">
+            <a class="author-link" href="?profile=${node.authorId}">
+                <strong>${escapeHtml(author)}</strong>
+            </a>
+            · ${formatDate(node.creationDate)}
+            ${renderVoteControls('comment', node.commentId, node.rating ?? 0)}
+            ${pinBtn}
+            ${replyBtn}
+            ${editBtn}
+            ${delBtn}
+        </div>
+        <div>${escapeHtml(node.content)}</div>
+        <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
+            <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
+            <div class="form-actions">
+                <button class="success" onclick="submitReply(${node.commentId})">Отправить</button>
+                <button class="logout" onclick="cancelReply(${node.commentId})">Отмена</button>
+            </div>
+        </div>
+    `;
+    wrapper.appendChild(div);
+
+    if (node.hasReplies) {
+        const container = document.createElement('div');
+        container.style.marginLeft = '24px';
+        container.id = 'replies-container-' + node.commentId;
+        
+        const btn = document.createElement('button');
+        btn.className = 'show-replies-btn';
+        btn.textContent = 'Показать ответы';
+        btn.onclick = () => loadReplies(node.commentId, btn, container);
+        
+        wrapper.appendChild(btn);
+        wrapper.appendChild(container);
+    }
+    return wrapper;
+}
+
+async function loadComments(postId, canModerate, isLoadMore = false) {
+    currentCommentsCanModerate = canModerate;
     const list = document.getElementById('commentsList');
-    list.innerHTML = '<p>Загрузка комментариев...</p>';
 
-    try {
-        const res = await fetch(`${API_URL}/api/comments`);
-        if (!res.ok) {
-            list.innerHTML = `<p class="error">Не удалось загрузить комментарии: ${res.status}</p>`;
-            return;
-        }
-
-        const all = await res.json();
-        const pid = parseInt(postId, 10);
-        const comments = all.filter(c => c.postId === pid);
-
-        const deletedParentsToKeep = new Set();
-        comments.forEach(c => {
-            if (!c.isDeleted && c.parentCommentId != null) {
-                deletedParentsToKeep.add(c.parentCommentId);
-            }
-        });
-
-        const visibleComments = comments.filter(c =>
-            !c.isDeleted || deletedParentsToKeep.has(c.commentId)
-        );
-
-        currentComments = visibleComments;
-
-        if (visibleComments.length === 0) {
-            list.innerHTML = '<p class="no-comments">Комментариев еще нет</p>';
-            return;
-        }
-
-        await ensureUsernamesLoaded(
-            visibleComments.filter(c => !c.isDeleted).map(c => c.authorId)
-        );
-
-        const byId = {};
-        visibleComments.forEach(c => { byId[c.commentId] = { ...c, children: [] }; });
-
-        const roots = [];
-        visibleComments.forEach(c => {
-            const node = byId[c.commentId];
-            if (c.parentCommentId != null && byId[c.parentCommentId]) {
-                byId[c.parentCommentId].children.push(node);
-            } else {
-                roots.push(node);
-            }
-        });
-
-        const currentUserId = getCurrentUserId();
+    if (!isLoadMore) {
+        currentCommentsPage = 1;
+        currentCommentsList = [];
         list.innerHTML = '';
 
-	if (currentPost && currentPost.isClosed) {
-    		const note = document.createElement('div');
-    		note.className = 'closed-note';
-    		list.appendChild(note);
-	}
+        if (currentPost && currentPost.isClosed) {
+            const note = document.createElement('div');
+            note.className = 'closed-note';
+            note.textContent = 'Пост закрыт. Новые комментарии недоступны.';
+            list.appendChild(note);
+        }
+    }
 
-        const renderNode = (node, depth) => {
-            const div = document.createElement('div');
-            div.id = 'comment-' + node.commentId;
-            div.className = 'comment' + (node.isPinned ? ' pinned' : '');
-            if (depth > 0) div.style.marginLeft = (depth * 24) + 'px';
+    try {
+        const res = await fetch(`${API_URL}/api/comments?postId=${postId}&page=${currentCommentsPage}&pageSize=${commentsPerPage}`);
+        if (!res.ok) throw new Error('Ошибка сервера');
 
-            if (node.isDeleted) {
-                div.classList.add('deleted');
-                div.innerHTML = `<div class="comment-meta">Комментарий удален</div>`;
-            } else {
-                const author = usersCache[node.authorId] || ('Пользователь ' + node.authorId);
-                const isAuthor = currentUserId != null && node.authorId === currentUserId;
-                const canDelete = canModerate || isAuthor;
+        const data = await res.json();
+        totalCommentsPages = Math.ceil(data.totalCount / commentsPerPage) || 1;
 
-		const postAuthorId = currentPost ? currentPost.authorId : null;
-		const isPostAuthorUser = currentUserId != null && currentUserId === postAuthorId;
-		const pinBtn = isPostAuthorUser ? `<button class="pin-btn${node.isPinned ? ' active' : ''}"
-             	title="${node.isPinned ? 'Открепить' : 'Закрепить'}"
-             	onclick="toggleCommentPinned(${node.commentId})">📌</button>` : '';
-                const replyBtn = `<button class="comment-del-btn reply-btn" onclick="startReply(${node.commentId})">Ответить</button>`;
-                const editBtn = isAuthor
-                    ? `<button class="logout comment-del-btn" onclick="startEditComment(${node.commentId})">Изменить</button>`
-                    : '';
-                const delBtn = canDelete
-                    ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
-                    : '';
+        const newItems = data.items;
+        currentCommentsList = currentCommentsList.concat(newItems);
+        
+        await ensureUsernamesLoaded(newItems.map(c => c.authorId));
 
-                                div.innerHTML = `
-                    <div class="comment-meta">
-                        <a class="author-link" href="?profile=${node.authorId}">
-                            <strong>${escapeHtml(author)}</strong>
-                        </a>
-                        · ${formatDate(node.creationDate)}
-                        ${renderVoteControls('comment', node.commentId, node.rating ?? 0)}
-                        ${pinBtn}
-                        ${replyBtn}
-                        ${editBtn}
-                        ${delBtn}
-                    </div>
-                    <div>${escapeHtml(node.content)}</div>
-                    <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
-                        <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
-                        <div class="form-actions">
-                            <button class="success" onclick="submitReply(${node.commentId})">Отправить</button>
-                            <button class="logout" onclick="cancelReply(${node.commentId})">Отмена</button>
-                        </div>
-                    </div>
-                `;
-            }
+        if (isLoadMore) {
+            const oldBtn = list.querySelector('.load-more-btn');
+            if (oldBtn) oldBtn.remove();
+        }
 
-            list.appendChild(div);
-            node.children.forEach(child => renderNode(child, depth + 1));
-        };
+        newItems.forEach(node => {
+            list.appendChild(createCommentElement(node));
+        });
 
-        roots.forEach(root => renderNode(root, 0));
+        if (currentCommentsPage < totalCommentsPages) {
+            const btn = document.createElement('button');
+            btn.className = 'load-more-btn';
+            btn.textContent = 'Показать ещё комментарии';
+            btn.onclick = () => {
+                currentCommentsPage++;
+                loadComments(currentPostId, currentCommentsCanModerate, true);
+            };
+            list.appendChild(btn);
+        }
+
     } catch (e) {
-        list.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+        if (!isLoadMore) {
+            list.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+        } else {
+            showMessage('Ошибка загрузки: ' + e.message);
+        }
+    }
+}
+
+async function loadReplies(commentId, btnElement, containerElement) {
+    btnElement.style.display = 'none';
+    containerElement.innerHTML = '<p style="color:#888; font-size:12px;">Загрузка ответов...</p>';
+
+    try {
+        const res = await fetch(`${API_URL}/api/comments?postId=${currentPostId}&parentCommentId=${commentId}`);
+        if (!res.ok) throw new Error('Ошибка при загрузке ответов');
+        
+        const data = await res.json();
+        console.log("Полученные ответы:", data.items);
+        containerElement.innerHTML = '';
+
+        if (data.items.length === 0) {
+            containerElement.innerHTML = '<p style="color:#888; font-size:12px;">Ответов нет.</p>';
+            return;
+        }
+        await ensureUsernamesLoaded(data.items.map(c => c.authorId));
+        data.items.forEach(reply => {
+            containerElement.appendChild(createCommentElement(reply));
+        });
+    } catch (e) {
+        containerElement.innerHTML = `<p class="error" style="font-size:12px;">Ошибка: ${escapeHtml(e.message)}</p>`;
     }
 }
 
@@ -908,33 +964,29 @@ async function submitReply(parentCommentId) {
             showMessage(`Ошибка ${res.status}: ${errText}`);
             return;
         }
-
-        await loadComments(pid, currentPostCanModerate);
+        await loadComments(pid, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
 }
 
 function startEditComment(commentId) {
-    const c = currentComments.find(x => x.commentId === commentId);
-    if (!c) return;
-
+    const c = currentCommentsList.find(x => x.commentId === commentId);
     const div = document.getElementById('comment-' + commentId);
     if (!div) return;
 
-    const author = usersCache[c.authorId] || 'Пользователь';
+    const content = div.querySelector('div:nth-child(2)') ? div.querySelector('div:nth-child(2)').innerText : '';
 
     div.innerHTML = `
         <div class="comment-meta">
-            <strong>${escapeHtml(author)}</strong> · ${formatDate(c.creationDate)} · редактирование
+            <strong>${escapeHtml(usersCache[c?.authorId] || 'Пользователь')}</strong> · редактирование
         </div>
-        <textarea id="editCommentText-${commentId}" rows="3"></textarea>
+        <textarea id="editCommentText-${commentId}" rows="3">${escapeHtml(content)}</textarea>
         <div class="form-actions">
             <button class="success" onclick="saveEditedComment(${commentId})">Сохранить</button>
-            <button class="logout" onclick="loadComments(${currentPostId}, ${currentPostCanModerate})">Отмена</button>
+            <button class="logout" onclick="loadComments(${currentPostId}, ${currentCommentsCanModerate})">Отмена</button>
         </div>
     `;
-    document.getElementById('editCommentText-' + commentId).value = c.content;
 }
 
 async function saveEditedComment(commentId) {
@@ -946,8 +998,6 @@ async function saveEditedComment(commentId) {
     const content = textarea.value.trim();
     if (!content) { showMessage('Введите текст комментария'); return; }
 
-    const original = currentComments.find(x => x.commentId === commentId);
-
     try {
         const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
             method: 'PUT',
@@ -955,26 +1005,17 @@ async function saveEditedComment(commentId) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify(original ? { ...original, content: content } : { content: content })
+            body: JSON.stringify({ content: content })
         });
 
         if (!res.ok) {
             let errText = '';
-            try {
-                const ct = res.headers.get('content-type') || '';
-                if (ct.includes('application/json')) {
-                    const j = await res.json();
-                    errText = j.title || j.detail || JSON.stringify(j);
-                    if (j.errors) errText += ' ' + JSON.stringify(j.errors);
-                } else {
-                    errText = await res.text();
-                }
-            } catch (_) { }
+            try { errText = await res.text(); } catch (_) { }
             showMessage(`Ошибка ${res.status}: ${errText}`);
             return;
         }
 
-        await loadComments(currentPostId, currentPostCanModerate);
+        await loadComments(currentPostId, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
@@ -997,7 +1038,7 @@ async function deleteCommentById(id) {
             return;
         }
 
-        await loadComments(currentPostId, currentPostCanModerate);
+        await loadComments(currentPostId, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
@@ -1048,12 +1089,13 @@ async function submitComment() {
         }
 
         contentEl.value = '';
-        await loadComments(pid, currentPostCanModerate);
+        await loadComments(pid, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
 }
 
+// закрепление / закрытие
 async function togglePostPinned() {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
@@ -1116,7 +1158,7 @@ async function toggleCommentPinned(commentId) {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
-    const c = currentComments.find(x => x.commentId === commentId);
+    const c = currentCommentsList.find(x => x.commentId === commentId);
     if (!c) return;
 
     const newValue = !c.isPinned;
@@ -1136,7 +1178,7 @@ async function toggleCommentPinned(commentId) {
             return;
         }
 
-        await loadComments(currentPostId, currentPostCanModerate);
+        await loadComments(currentPostId, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }

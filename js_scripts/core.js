@@ -1,4 +1,4 @@
-const API_URL = 'https://forum-6sgl.onrender.com';
+const API_URL = 'http://localhost:5068';
 
         // состояние
         let subforums = [];
@@ -12,6 +12,14 @@ const API_URL = 'https://forum-6sgl.onrender.com';
         let currentPost = null;
         let currentComments = [];
         let votes = [];
+	let currentPostsPage = 1;
+	let totalPostsPages = 1;
+	const postsPerPage = 10;
+
+	let currentCommentsPage = 1;
+	let totalCommentsPages = 1;
+	const commentsPerPage = 10;
+	let currentCommentsList = [];
 
         // отложенное действие для confirm-модалки
         let pendingConfirmAction = null;
