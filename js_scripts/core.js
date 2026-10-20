@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5068';
+const API_URL = 'https://forum-6sgl.onrender.com';
 
         // состояние
         let subforums = [];
