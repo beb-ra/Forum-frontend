@@ -163,14 +163,16 @@ async function deleteSubforum(id, name) {
     if (!isGlobalAdmin()) { showMessage('Только администратор может удалять подфорумы'); return; }
 
     try {
-        const postsRes = await fetch(`${API_URL}/api/posts`, {
+        const postsRes = await fetch(`${API_URL}/api/posts?page=1&pageSize=10000`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!postsRes.ok) {
             showMessage('Не удалось получить список постов: ' + postsRes.status);
             return;
         }
-        const allPosts = await postsRes.json();
+        const data = await postsRes.json();
+        const allPosts = data.items || [];
+
         const postsToDelete = allPosts.filter(p =>
             p.subforumId === id && !p.isDeleted
         );
