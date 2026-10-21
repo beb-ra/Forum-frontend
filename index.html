@@ -55,22 +55,31 @@
             </aside>
 
             <main class="content">
-                <h2 id="createPostToggle" style="cursor: pointer; user-select: none;" onclick="toggleCreatePostForm()">
-                    Создать пост <span id="createPostArrow" style="font-size: 14px; color: #888;">▼</span>
-                </h2>
-                <div id="createPostForm" style="display: none;">
-                    <label for="postSubforumId" style="font-size:14px; color:#555;">Подфорум:</label>
-                    <select id="postSubforumId"></select>
-                    <input id="postTitle" type="text" placeholder="Заголовок">
-                    <textarea id="postContent" rows="3" placeholder="Текст поста"></textarea>
-                    <button onclick="createPost()">Опубликовать</button>
-                </div>
+    <h2 id="createPostToggle" class="toggle-header" onclick="toggleCreatePostForm()">
+        Создать пост <span id="createPostArrow" class="toggle-arrow">▼</span>
+    </h2>
+    
+    <div id="createPostForm" style="display: none;">
+        <label for="postSubforumId" class="input-label">Подфорум:</label>
+        <select id="postSubforumId"></select>
+        <input id="postTitle" type="text" placeholder="Заголовок">
+        <textarea id="postContent" rows="3" placeholder="Текст поста"></textarea>
 
-                <h2>Посты <span id="postsFilterLabel" style="font-size:13px; color:#888; font-weight:normal;"></span></h2>
-                <button onclick="loadPosts()">Обновить список</button>
-                <div id="postsList"></div>
-		<div id="pagination" class="pagination"></div>
-            </main>
+        <div id="postImagesPreview" class="images-preview"></div>
+
+        <div class="action-row">
+            <button type="button" class="attach-btn" title="Прикрепить изображения" onclick="document.getElementById('postImagesInput').click()">📎</button>
+            <input type="file" id="postImagesInput" multiple accept="image/*" style="display: none;" onchange="handlePostImageUpload(event)">
+            <span id="postImageError" class="error-text"></span>
+            <button onclick="createPost()">Опубликовать</button>
+        </div>
+    </div>
+
+    <h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
+    <button onclick="loadPosts()">Обновить список</button>
+    <div id="postsList"></div>
+    <div id="pagination" class="pagination"></div>
+</main>
         </div>
     </div>
 
@@ -81,10 +90,17 @@
         <div id="postDetailContent"></div>
 
         <h2>Комментарии</h2>
-        <div id="commentFormContainer" style="display: none;">
-            <textarea id="newCommentContent" rows="3" placeholder="Ваш комментарий..."></textarea>
-            <button onclick="submitComment()">Отправить</button>
-        </div>
+        <div id="commentFormContainer">
+    		<textarea id="newCommentContent" rows="3" placeholder="Ваш комментарий..."></textarea>
+    
+    		<div id="commentImagePreview" class="images-preview"></div>
+    
+    		<div class="action-row">
+        		<button type="button" class="attach-btn" onclick="document.getElementById('commentImageInput').click()">📎			</button>
+        		<input type="file" id="commentImageInput" accept="image/*" style="display: none;" onchange="handleCommentImageUpload(event)">
+        		<button onclick="submitComment()">Отправить</button>
+    		</div>
+	</div>
         <div id="commentsList"></div>
     </div>
 

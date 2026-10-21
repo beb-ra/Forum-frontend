@@ -15,23 +15,16 @@ const API_URL = 'https://forum-6sgl.onrender.com';
 	let currentPostsPage = 1;
 	let totalPostsPages = 1;
 	const postsPerPage = 10;
-
 	let currentCommentsPage = 1;
 	let totalCommentsPages = 1;
 	const commentsPerPage = 10;
 	let currentCommentsList = [];
-
-        // отложенное действие для confirm-модалки
         let pendingConfirmAction = null;
-
-        // кэш списка ролей (Admin/Moderator с их id)
         let rolesList = [];
-
-        // какой профиль сейчас редактируется в модалке полномочий
         let currentRolesProfileId = null;
-
-        // какой профиль сейчас баним
         let currentBanProfileId = null;
+	let currentPostImages = [];
+	let currentCommentImage = null;
 
         // утилиты
         function showMessage(text, isError = true) {

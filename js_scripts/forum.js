@@ -170,8 +170,7 @@ async function deleteSubforum(id, name) {
             showMessage('Не удалось получить список постов: ' + postsRes.status);
             return;
         }
-        const data = await postsRes.json();
-        const allPosts = data.items || [];
+        const allPosts = await postsRes.json();
         const postsToDelete = allPosts.filter(p =>
             p.subforumId === id && !p.isDeleted
         );
@@ -422,6 +421,9 @@ function renderPosts() {
         const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
         const tag = p.tagId != null ? tagName(p.tagId) : null;
 
+	const imagesHtml = (p.images && p.images.length > 0)
+    ? `<div class="post-images-container">${p.images.map(img => `<img src="${img.imageUrl}" class="post-image">`).join('')}</div>`
+    : '';
         div.innerHTML = `
             <h3>
                 ${p.isPinned ? '<span class="badge-pin" title="Закреплено">📌</span>' : ''}
@@ -431,6 +433,7 @@ function renderPosts() {
                 </a>
             </h3>
             <p>${escapeHtml(p.content)}</p>
+            ${imagesHtml}
             <div class="post-meta">
                 Автор:
                 <a class="author-link" href="?profile=${p.authorId}">
@@ -443,6 +446,7 @@ function renderPosts() {
         container.appendChild(div);
     });
 
+    // отрисовка кнопок пагинации
     if (totalPostsPages > 1) {
         const pag = document.createElement('div');
         pag.className = 'pagination';
@@ -486,7 +490,7 @@ async function createPost() {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ subforumId, title, content })
+            body: JSON.stringify({ subforumId, title, content, imageUrls: currentPostImages })
         });
 
         if (!res.ok) {
@@ -494,12 +498,18 @@ async function createPost() {
             showMessage(`Ошибка ${res.status}: ${text}`);
             return;
         }
-
         document.getElementById('postTitle').value = '';
         document.getElementById('postContent').value = '';
-        showMessage('Пост создан!', false);
+        
+        const previewContainer = document.getElementById('postImagesPreview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+        
+        currentPostImages = [];
         currentPostsPage = 1;
         loadPosts();
+        
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
@@ -744,6 +754,7 @@ async function deleteCurrentPost() {
     }
 }
 
+// генерация HTML одного комментария
 function createCommentElement(node) {
     const wrapper = document.createElement('div');
     wrapper.id = 'comment-wrapper-' + node.commentId;
@@ -779,7 +790,9 @@ function createCommentElement(node) {
     const delBtn = canDelete
         ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
         : '';
-
+    const commentImageHtml = node.imageUrl 
+    ? `<img src="${node.imageUrl}" class="comment-image">` 
+    : '';
     div.innerHTML = `
         <div class="comment-meta">
             <a class="author-link" href="?profile=${node.authorId}">
@@ -793,6 +806,7 @@ function createCommentElement(node) {
             ${delBtn}
         </div>
         <div>${escapeHtml(node.content)}</div>
+        ${commentImageHtml}
         <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
             <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
             <div class="form-actions">
@@ -886,6 +900,7 @@ async function loadReplies(commentId, btnElement, containerElement) {
         if (!res.ok) throw new Error('Ошибка при загрузке ответов');
         
         const data = await res.json();
+        console.log("Полученные ответы:", data.items);
         containerElement.innerHTML = '';
 
         if (data.items.length === 0) {
@@ -1066,7 +1081,8 @@ async function submitComment() {
             body: JSON.stringify({
                 postId: pid,
                 content: content,
-                parentCommentId: null
+                parentCommentId: null,
+		imageUrl: currentCommentImage
             })
         });
 
@@ -1087,12 +1103,16 @@ async function submitComment() {
         }
 
         contentEl.value = '';
+	currentCommentImage = null;
+	const cPreview = document.getElementById('commentImagePreview');
+	if (cPreview) cPreview.innerHTML = '';
         await loadComments(pid, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
 }
 
+// закрепление / закрытие
 async function togglePostPinned() {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
@@ -1179,4 +1199,101 @@ async function toggleCommentPinned(commentId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+}
+
+async function uploadImages(files) {
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+
+    const res = await fetch(`${API_URL}/api/images/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + getToken() },
+        body: formData
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+
+    const data = await res.json();
+    return data.ImageUrls || data.imageUrls || [];
+}
+
+// обработка выбора картинок для поста
+async function handlePostImageUpload(event) {
+    const files = event.target.files;
+    const errorSpan = document.getElementById('postImageError');
+    if (errorSpan) errorSpan.textContent = '';
+
+    if (!files || files.length === 0) return;
+
+    if (currentPostImages.length + files.length > 4) {
+        if (errorSpan) errorSpan.textContent = 'Нельзя прикрепить больше 4 изображений';
+        event.target.value = '';
+        return;
+    }
+
+    try {
+        if (errorSpan) errorSpan.textContent = 'Загрузка...';
+        const urls = await uploadImages(files);
+        currentPostImages = currentPostImages.concat(urls);
+        renderPostImagesPreview();
+        if (errorSpan) errorSpan.textContent = '';
+    } catch (e) {
+        if (errorSpan) errorSpan.textContent = 'Ошибка: ' + e.message;
+    }
+    event.target.value = '';
+}
+
+function renderPostImagesPreview() {
+    const container = document.getElementById('postImagesPreview');
+    if (!container) return; 
+    
+    container.innerHTML = '';
+    currentPostImages.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.className = 'preview-img-wrapper';
+        div.innerHTML = `
+            <img src="${url}" alt="preview">
+            <button class="remove-img-btn" onclick="removePostImage(${index})">×</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function removePostImage(index) {
+    currentPostImages.splice(index, 1);
+    renderPostImagesPreview();
+}
+
+// обработка выбора картинки для комментария
+async function handleCommentImageUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+        const urls = await uploadImages([files[0]]); // Берем только 1 файл
+        currentCommentImage = urls[0];
+        
+        const container = document.getElementById('commentImagePreview');
+        if (container) {
+            container.innerHTML = `
+                <div class="preview-img-wrapper">
+                    <img src="${currentCommentImage}" alt="preview">
+                    <button class="remove-img-btn" onclick="removeCommentImage()">×</button>
+                </div>
+            `;
+        }
+    } catch (e) {
+        showMessage('Ошибка загрузки: ' + e.message);
+    }
+    event.target.value = '';
+}
+
+function removeCommentImage() {
+    currentCommentImage = null;
+    const container = document.getElementById('commentImagePreview');
+    if (container) container.innerHTML = '';
 }
