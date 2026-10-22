@@ -159,8 +159,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
             document.getElementById('appSection').className = 'section';
             document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
 
-            document.getElementById('createSubforumBlock').style.display =
-                isGlobalAdmin() ? 'block' : 'none';
+	    document.getElementById('adminToolsBtn').style.display = isGlobalAdmin() ? 'block' : 'none';
 
             await ensureTagsLoaded();
             await loadSubforums();
@@ -194,22 +193,6 @@ const API_URL = 'https://forum-6sgl.onrender.com';
             }
         }
 
-	// модальное окно создания подфорума
-        function openCreateSubforumModal() {
-            if (!isGlobalAdmin()) {
-                showMessage('Только администратор может создавать подфорумы');
-                return;
-            }
-            document.getElementById('createSubforumModal').classList.add('open');
-            document.getElementById('subforumName').value = '';
-            document.getElementById('subforumDesc').value = '';
-            setTimeout(() => document.getElementById('subforumName').focus(), 50);
-        }
-
-        function closeCreateSubforumModal() {
-            document.getElementById('createSubforumModal').classList.remove('open');
-        }
-
         // универсальное подтверждение
         function showConfirm(message, onConfirm, title = 'Подтверждение', yesText = 'Удалить') {
             document.getElementById('confirmTitle').textContent = title;
@@ -231,6 +214,16 @@ const API_URL = 'https://forum-6sgl.onrender.com';
                 await action();
             }
         }
+
+	function openAdminToolsModal() {
+    if (!isGlobalAdmin()) return;
+    document.getElementById('adminToolsModal').classList.add('open');
+    switchAdminTab('users'); // По умолчанию открываем вкладку пользователей
+}
+
+function closeAdminToolsModal() {
+    document.getElementById('adminToolsModal').classList.remove('open');
+}
 
 	function hideAllSections() {
     ['loginSection', 'registerSection', 'appSection',

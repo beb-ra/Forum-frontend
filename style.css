@@ -694,6 +694,100 @@ button.pin-btn.active {
     color: #888;
     font-weight: normal;
 }
+
+.user-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e7f3ff;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.admin-tools-btn {
+    background: #fff;
+    border: 1px solid #b6d8ff;
+    color: #0056b3;
+    border-radius: 6px;
+    font-size: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    margin: 0;
+    transition: background 0.15s, transform 0.15s;
+}
+.admin-tools-btn:hover {
+    background: #d0e6ff;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #ddd;
+}
+.admin-tab {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 8px 16px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    border-radius: 4px 4px 0 0;
+}
+.admin-tab:hover {
+    background: #f0f0f0;
+}
+.admin-tab.active {
+    color: #0056b3;
+    border-bottom: 2px solid #007bff;
+    background: #f0f8ff;
+}
+
+.admin-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+.admin-list li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+.admin-list li:last-child {
+    border-bottom: none;
+}
+.admin-list li:hover {
+    background: #fafafa;
+}
+
+.tag-del-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 6px;
+    cursor: pointer;
+    margin: 0;
+    border-radius: 3px;
+}
+.tag-del-btn:hover {
+    background: #f8d7da;
+}
+
+#confirmModal {
+    z-index: 2000;
+}
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }

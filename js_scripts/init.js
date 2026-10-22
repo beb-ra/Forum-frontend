@@ -1,12 +1,12 @@
 // Закрытие модалок по Esc
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        closeCreateSubforumModal();
         closeConfirmModal();
         closeRolesModal();
         closeBanModal();
 	closeEmailModal();
         closePasswordModal();
+	closeAdminToolsModal();
     }
 });
 

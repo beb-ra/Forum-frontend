@@ -48,19 +48,6 @@ function makeSubforumItem(name, id) {
     nameSpan.textContent = name;
     li.appendChild(nameSpan);
 
-    if (id !== null && isGlobalAdmin()) {
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'subforum-del-btn';
-        delBtn.title = 'Удалить подфорум';
-        delBtn.textContent = '×';
-        delBtn.onclick = (e) => {
-            e.stopPropagation();
-            askDeleteSubforum(id, name);
-        };
-        li.appendChild(delBtn);
-    }
-
     li.onclick = () => {
         currentSubforumId = id;
         currentPostsPage = 1;
@@ -106,10 +93,8 @@ async function createSubforum() {
     if (!token) { showMessage('Сначала войдите'); return; }
     if (!isGlobalAdmin()) { showMessage('Только администратор может создавать подфорумы'); return; }
 
-    const nameEl = document.getElementById('subforumName');
-    const descEl = document.getElementById('subforumDesc');
+    const nameEl = document.getElementById('newSubforumName');
     const name = nameEl.value.trim();
-    const desc = descEl.value.trim();
 
     if (!name) { showMessage('Введите название подфорума'); return; }
 
@@ -120,7 +105,7 @@ async function createSubforum() {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ name: name, description: desc || null })
+            body: JSON.stringify({ name: name, description: null })
         });
 
         if (!res.ok) {
@@ -140,9 +125,8 @@ async function createSubforum() {
         }
 
         nameEl.value = '';
-        descEl.value = '';
-        closeCreateSubforumModal();
         await loadSubforums();
+        await loadAdminSubforums();
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
@@ -204,6 +188,7 @@ async function deleteSubforum(id, name) {
 
         await loadSubforums();
         await loadPosts();
+        await loadAdminSubforums();
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
@@ -1276,7 +1261,7 @@ async function handleCommentImageUpload(event) {
     if (!files || files.length === 0) return;
 
     try {
-        const urls = await uploadImages([files[0]]); // Берем только 1 файл
+        const urls = await uploadImages([files[0]]);
         currentCommentImage = urls[0];
         
         const container = document.getElementById('commentImagePreview');
@@ -1298,4 +1283,177 @@ function removeCommentImage() {
     currentCommentImage = null;
     const container = document.getElementById('commentImagePreview');
     if (container) container.innerHTML = '';
+}
+
+async function loadAdminUsers() {
+    const list = document.getElementById('adminUsersList');
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/api/users`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Ошибка доступа');
+
+        const users = await res.json();
+        
+        if (users.length === 0) {
+            list.innerHTML = '<li>Пользователей нет</li>';
+            return;
+        }
+
+        list.innerHTML = '';
+        users.forEach(u => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div>
+                    <strong>${escapeHtml(u.username)}</strong> <span style="color:#888;">(ID: ${u.userId})</span>
+                    ${u.email ? `<br><small style="color:#666;">${escapeHtml(u.email)}</small>` : ''}
+                </div>
+                <a href="?profile=${u.userId}" class="small-btn" style="text-decoration:none;">Профиль</a>
+            `;
+            list.appendChild(li);
+        });
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-content').forEach(content => content.style.display = 'none');
+
+    if (tab === 'users') {
+        document.querySelector('.admin-tabs button:nth-child(1)').classList.add('active');
+        document.getElementById('adminTabUsers').style.display = 'block';
+        loadAdminUsers();
+    } else if (tab === 'tags') {
+        document.querySelector('.admin-tabs button:nth-child(2)').classList.add('active');
+        document.getElementById('adminTabTags').style.display = 'block';
+        loadAdminTags();
+    } else if (tab === 'subforums') {
+        document.querySelector('.admin-tabs button:nth-child(3)').classList.add('active');
+        document.getElementById('adminTabSubforums').style.display = 'block';
+        loadAdminSubforums();
+    }
+}
+
+// вкладка тэги
+async function loadAdminTags() {
+    const list = document.getElementById('adminTagsList');
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+
+    try {
+        const res = await fetch(`${API_URL}/api/tags`);
+        const tags = await res.json();
+        
+        if (tags.length === 0) {
+            list.innerHTML = '<li>Тегов нет</li>';
+            return;
+        }
+
+        list.innerHTML = '';
+        tags.forEach(t => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${escapeHtml(t.name)}</span>
+                <button class="tag-del-btn" title="Удалить тег" onclick="askDeleteTag(${t.tagId}, '${escapeHtml(t.name)}')">×</button>
+            `;
+            list.appendChild(li);
+        });
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+async function loadAdminSubforums() {
+    const list = document.getElementById('adminSubforumsList');
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+
+    try {
+        const res = await fetch(`${API_URL}/api/subforums`);
+        const data = await res.json();
+        const activeSubforums = data.filter(s => !s.isDeleted);
+
+        if (activeSubforums.length === 0) {
+            list.innerHTML = '<li>Подфорумов нет</li>';
+            return;
+        }
+
+        list.innerHTML = '';
+        activeSubforums.forEach(s => {
+            const li = document.createElement('li');
+            const subName = s.name || s.title || ('Подфорум ' + s.subforumId);
+            const subId = s.subforumId ?? s.id;
+            
+            li.innerHTML = `
+                <span>${escapeHtml(subName)}</span>
+                <button class="tag-del-btn" title="Удалить подфорум" onclick="askDeleteSubforum(${subId}, '${escapeHtml(subName)}')">×</button>
+            `;
+            list.appendChild(li);
+        });
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+async function createTag() {
+    const input = document.getElementById('newTagName');
+    const name = input.value.trim();
+    if (!name) return showMessage('Введите название тега');
+
+    const token = getToken();
+    try {
+        const res = await fetch(`${API_URL}/api/tags`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ name: name })
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            showMessage(`Ошибка ${res.status}: ${text}`);
+            return;
+        }
+
+        input.value = '';
+        await loadTags();
+        loadAdminTags();
+    } catch (e) {
+        showMessage('Ошибка сети: ' + e.message);
+    }
+}
+
+function askDeleteTag(id, name) {
+    showConfirm(
+        `Вы действительно хотите удалить тег «${name}»?`,
+        () => deleteTag(id),
+        'Удаление тега',
+        'Удалить'
+    );
+}
+
+async function deleteTag(id) {
+    const token = getToken();
+    try {
+        const res = await fetch(`${API_URL}/api/tags/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка удаления: ' + res.status);
+            return;
+        }
+
+        await loadTags();
+        loadAdminTags();
+        loadPosts();
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
 }

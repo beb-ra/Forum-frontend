@@ -40,18 +40,17 @@
     <!-- Форум -->
     <div id="appSection" class="section hidden">
         <div class="user-info">
-            <strong>Вы вошли как:</strong> <span id="currentUser"></span>
-            <span id="roleBadges"></span>
-        </div>
+    		<div class="user-info-text">
+        		<strong>Вы вошли как:</strong> <span id="currentUser"></span>
+        		<span id="roleBadges"></span>
+    		</div>
+    		<button id="adminToolsBtn" class="admin-tools-btn" title="Инструменты администратора" onclick="openAdminToolsModal()" style="display: none;">🛠️</button>
+	</div>
 
         <div class="layout">
             <aside class="sidebar">
                 <h2>Подфорумы</h2>
                 <ul id="subforumsList"></ul>
-
-                <div id="createSubforumBlock" style="display: none;">
-                    <button class="success" onclick="openCreateSubforumModal()">Создать подфорум</button>
-                </div>
             </aside>
 
             <main class="content">
@@ -273,6 +272,53 @@
             </div>
         </div>
     </div>
+
+<!-- Модальное окно инструменты администратора -->
+<div id="adminToolsModal" class="modal-overlay" onclick="if(event.target===this) closeAdminToolsModal()">
+    <div class="modal" style="max-width: 600px;">
+        <h2>Инструменты администратора</h2>
+        
+        <!-- Вкладки -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchAdminTab('users')">Пользователи</button>
+            <button class="admin-tab" onclick="switchAdminTab('tags')">Теги</button>
+	    <button class="admin-tab" onclick="switchAdminTab('subforums')">Подфорумы</button>
+        </div>
+
+        <!-- Содержимое вкладки пользователи -->
+        <div id="adminTabUsers" class="admin-tab-content">
+            <ul id="adminUsersList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+        <!-- Содержимое вкладки теги -->
+        <div id="adminTabTags" class="admin-tab-content" style="display: none;">
+            <div class="action-row" style="margin-bottom: 15px;">
+                <input id="newTagName" type="text" placeholder="Название нового тега">
+                <button class="success" onclick="createTag()">Создать</button>
+            </div>
+            <ul id="adminTagsList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+	<!-- Содержимое вкладки подфорумы -->
+        <div id="adminTabSubforums" class="admin-tab-content" style="display: none;">
+            <div class="action-row" style="margin-bottom: 15px;">
+                <input id="newSubforumName" type="text" placeholder="Название нового подфорума">
+                <button class="success" onclick="createSubforum()">Создать</button>
+            </div>
+            <ul id="adminSubforumsList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+        <div class="modal-actions">
+            <button class="logout" onclick="closeAdminToolsModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
 
     <script src="js_scripts/core.js"></script>
     <script src="js_scripts/auth.js"></script>
