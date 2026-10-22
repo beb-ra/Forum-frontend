@@ -1,3 +1,4 @@
+// ---- показ профиля ----
 async function showProfilePage(profileId) {
     showProfileSection();
 
@@ -52,55 +53,40 @@ async function showProfilePage(profileId) {
             <div class="profile-row"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
         `;
         if (isOwn) {
-            html += `
-                <div class="profile-row">
-                    <strong>Email:</strong> ${escapeHtml(u.email ?? '—')}
-                    <button class="small-btn" onclick="openEmailModal()">Изменить</button>
-                </div>
-                <div class="profile-row">
-                    <strong>Пароль:</strong> ••••••••
-                    <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
-                </div>
-            `;
-        }
+    html += `
+        <div class="profile-row">
+            <strong>Email:</strong> ${escapeHtml(u.email ?? '—')}
+            <button class="small-btn" onclick="openEmailModal()">Изменить</button>
+        </div>
+        <div class="profile-row">
+            <strong>Пароль:</strong> ••••••••
+            <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
+        </div>
+    `;
+}
 
+        // Посты и комментарии пользователя
         let userPosts = [];
         let userComments = [];
-        let postsById = {};
 
         try {
             const [postsRes, commentsRes] = await Promise.all([
-                fetch(`${API_URL}/api/posts`),
-                fetch(`${API_URL}/api/comments`)
+                fetch(`${API_URL}/api/posts/author/${profileId}?pageSize=5`),
+                fetch(`${API_URL}/api/comments/author/${profileId}?pageSize=5`)
             ]);
 
             if (postsRes.ok) {
-                const data = await postsRes.json();
-                const allPosts = data.items || [];
-                
-                allPosts.forEach(p => {
-                    postsById[p.postId] = {
-                        title: p.title,
-                        isDeleted: !!p.isDeleted
-                    };
-                });
-                userPosts = allPosts
-                    .filter(p => !p.isDeleted && p.authorId === profileId)
-                    .sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate))
-                    .slice(0, 5);
+                const rawData = await postsRes.json();
+                userPosts = rawData.items || rawData;
             }
 
             if (commentsRes.ok) {
-                const data = await commentsRes.json();
-                const allComments = data.items || [];
-                
-                userComments = allComments
-                    .filter(c => !c.isDeleted && c.authorId === profileId)
-                    .sort((a, b) => new Date(b.creationDate) - new Date(a.creationDate))
-                    .slice(0, 5);
+                const rawData = await commentsRes.json();
+                userComments = rawData.items || rawData;
             }
         } catch (_) { }
 
+        // Блок «Активные баны» (для админа)
         const userBans = await loadUserBans(profileId);
         if (isGlobalAdmin() && userBans.length > 0) {
             html += `<div class="profile-subsection">
@@ -155,27 +141,13 @@ async function showProfilePage(profileId) {
         } else {
             html += `<ul class="profile-list">`;
             userComments.forEach(c => {
-                const postInfo = postsById[c.postId];
-                const postTitle = postInfo ? postInfo.title : 'Пост';
-                const postDeleted = postInfo ? postInfo.isDeleted : true;
-
-                if (postDeleted) {
-                    html += `<li class="profile-list-item">
-                        <span class="profile-link" style="color:#888; cursor:default;">
-                            ${escapeHtml(postTitle)} (удалён)
-                        </span>
-                        <span class="profile-excerpt">${escapeHtml(truncate(c.content, 120))}</span>
-                        <span class="profile-date">${escapeHtml(formatDate(c.creationDate))}</span>
-                    </li>`;
-                } else {
-                    html += `<li class="profile-list-item">
-                        <a class="profile-link" href="?post=${c.postId}">
-                            ${escapeHtml(postTitle)}
-                        </a>
-                        <span class="profile-excerpt">${escapeHtml(truncate(c.content, 120))}</span>
-                        <span class="profile-date">${escapeHtml(formatDate(c.creationDate))}</span>
-                    </li>`;
-                }
+                html += `<li class="profile-list-item">
+                    <a class="profile-link" href="?post=${c.postId}">
+                        ${escapeHtml(c.postTitle || 'Пост')}
+                    </a>
+                    <span class="profile-excerpt">${escapeHtml(truncate(c.content, 120))}</span>
+                    <span class="profile-date">${escapeHtml(formatDate(c.creationDate))}</span>
+                </li>`;
             });
             html += `</ul>`;
         }
@@ -184,6 +156,7 @@ async function showProfilePage(profileId) {
 
         content.innerHTML = html;
 
+        // Кнопки в шапке профиля
         if (isOwn) {
             logoutBtn.style.display = 'inline-block';
             deleteAccountBtn.style.display = 'inline-block';
@@ -203,6 +176,7 @@ async function showProfilePage(profileId) {
     }
 }
 
+// ---- удаление своего аккаунта ----
 function askDeleteOwnAccount() {
     const uid = getCurrentUserId();
     if (uid == null) { showMessage('Вы не авторизованы'); return; }
@@ -245,6 +219,7 @@ async function deleteOwnAccount(uid) {
     }
 }
 
+// роли
 async function loadRolesList() {
     if (rolesList.length > 0) return;
     const token = getToken();
@@ -351,6 +326,7 @@ function closeRolesModal() {
     currentRolesProfileId = null;
 }
 
+// слушатель переключения ролей
 document.querySelectorAll('input[name="roleOption"]').forEach(r => {
     r.addEventListener('change', () => {
         const block = document.getElementById('moderatorSubforumBlock');
@@ -456,6 +432,7 @@ async function saveUserRoles() {
     showMessage('Полномочия обновлены', false);
 }
 
+// баны
 function canCurrentUserBan() {
     if (isGlobalAdmin()) return true;
     return getModeratedSubforumIds().length > 0;
@@ -518,6 +495,7 @@ function closeBanModal() {
     currentBanProfileId = null;
 }
 
+// слушатель переключения области бана
 document.querySelectorAll('input[name="banScope"]').forEach(r => {
     r.addEventListener('change', () => {
         const block = document.getElementById('banSubforumBlock');
@@ -537,10 +515,8 @@ async function deleteUserContent(userId) {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (res.ok) {
-            const data = await res.json();
-            const allPosts = data.items || [];
-            
-            const userPosts = allPosts.filter(p => p.authorId === userId && !p.isDeleted);
+            const all = await res.json();
+            const userPosts = all.filter(p => p.authorId === userId && !p.isDeleted);
             for (const p of userPosts) {
                 const r = await fetch(`${API_URL}/api/posts/${p.postId}`, {
                     method: 'DELETE',
@@ -554,10 +530,8 @@ async function deleteUserContent(userId) {
     try {
         const res = await fetch(`${API_URL}/api/comments`);
         if (res.ok) {
-            const data = await res.json();
-            const allComments = data.items || [];
-            
-            const userComments = allComments.filter(c => c.authorId === userId && !c.isDeleted);
+            const all = await res.json();
+            const userComments = all.filter(c => c.authorId === userId && !c.isDeleted);
             for (const c of userComments) {
                 const r = await fetch(`${API_URL}/api/comments/${c.commentId}`, {
                     method: 'DELETE',
@@ -724,9 +698,10 @@ async function unbanUser(banId) {
     }
 }
 
+// смена почты
 function openEmailModal() {
     document.getElementById('newEmailInput').value = '';
-    document.getElementById('emailPasswordInput').value = '';
+    document.getElementById('emailPasswordInput').value = ''; // очищаем поле пароля
     document.getElementById('emailModal').classList.add('open');
     setTimeout(() => document.getElementById('newEmailInput').focus(), 50);
 }
@@ -782,6 +757,7 @@ async function saveEmail() {
     }
 }
 
+// смена пароля
 function openPasswordModal() {
     document.getElementById('currentPasswordInput').value = '';
     document.getElementById('newPasswordInput').value = '';
