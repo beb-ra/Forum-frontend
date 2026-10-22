@@ -742,7 +742,7 @@ async function deleteCurrentPost() {
 }
 
 // генерация HTML одного комментария
-function createCommentElement(node) {
+function createCommentElement(node, isReply = false) {
     const wrapper = document.createElement('div');
     wrapper.id = 'comment-wrapper-' + node.commentId;
 
@@ -764,7 +764,7 @@ function createCommentElement(node) {
 
     const postAuthorId = currentPost ? currentPost.authorId : null;
     const isPostAuthorUser = currentUserId != null && currentUserId === postAuthorId;
-    const pinBtn = isPostAuthorUser
+    const pinBtn = (isPostAuthorUser && !isReply)
         ? `<button class="pin-btn${node.isPinned ? ' active' : ''}"
                  title="${node.isPinned ? 'Открепить' : 'Закрепить'}"
                  onclick="toggleCommentPinned(${node.commentId})">📌</button>`
@@ -896,7 +896,7 @@ async function loadReplies(commentId, btnElement, containerElement) {
         }
         await ensureUsernamesLoaded(data.items.map(c => c.authorId));
         data.items.forEach(reply => {
-            containerElement.appendChild(createCommentElement(reply));
+            containerElement.appendChild(createCommentElement(reply, true));
         });
     } catch (e) {
         containerElement.innerHTML = `<p class="error" style="font-size:12px;">Ошибка: ${escapeHtml(e.message)}</p>`;

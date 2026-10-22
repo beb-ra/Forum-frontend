@@ -16,6 +16,19 @@ document.addEventListener('keydown', e => {
     const postId = params.get('post');
     const profileId = params.get('profile');
 
+    if (getToken()) {
+        try {
+            const res = await fetch(`${API_URL}/api/users/me`, {
+                headers: { 'Authorization': 'Bearer ' + getToken() }
+            });
+            if (res.status === 401 || res.status === 404) {
+                clearToken();
+            }
+        } catch (e) {
+            console.warn("Сервер недоступен, проверка токена пропущена");
+        }
+    }
+
     await ensureTagsLoaded();
 
     if (profileId) {
@@ -36,3 +49,9 @@ document.addEventListener('keydown', e => {
         showLogin();
     }
 })();
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});

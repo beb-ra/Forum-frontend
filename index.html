@@ -74,8 +74,10 @@
         </div>
     </div>
 
-    <h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
-    <button onclick="loadPosts()">Обновить список</button>
+    <div class="posts-header">
+    	<h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
+    	<button class="btn-gray-icon" onclick="loadPosts()" title="Обновить список">↻</button>
+    </div>
     <div id="postsList"></div>
     <div id="pagination" class="pagination"></div>
 </main>
