@@ -543,6 +543,10 @@ async function showPostDetail(postId) {
 
         const canDeletePost = canMod || isPostAuthor;
 
+	const imagesHtml = (p.images && p.images.length > 0)
+            ? `<div class="post-images-container">${p.images.map(img => `<img src="${img.imageUrl}" class="post-image">`).join('')}</div>`
+            : '';
+
         let html = `
             <h2>${escapeHtml(p.title)}</h2>
             <div class="post-meta" style="margin-bottom: 10px;">
@@ -559,6 +563,7 @@ async function showPostDetail(postId) {
                 ${renderVoteControls('post', p.postId, p.rating ?? 0)}
             </div>
             <p>${escapeHtml(p.content)}</p>
+            ${imagesHtml}
         `;
 
         const hasControls = canMod || canDeletePost || isPostAuthor;
