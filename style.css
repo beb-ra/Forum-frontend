@@ -1,6 +1,10 @@
 	* { box-sizing: border-box; font-family: Arial, sans-serif; }
         body { max-width: 900px; margin: 20px auto; padding: 0 20px; }
 
+html {
+    overflow-y: scroll;
+}
+
         .topbar {
             display: grid;
             grid-template-columns: 1fr auto 1fr;

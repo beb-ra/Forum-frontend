@@ -17,6 +17,7 @@ document.addEventListener('keydown', e => {
     const profileId = params.get('profile');
     const subforumParam = params.get('subforum');
     const myPostsParam = params.get('my-posts');
+    const searchParam = params.get('search');
 
     if (getToken()) {
         try {
@@ -52,6 +53,14 @@ document.addEventListener('keydown', e => {
         currentSubforumId = parseInt(subforumParam, 10);
     }
 
+    if (searchParam) {
+        currentSearchQuery = searchParam;
+        setTimeout(() => {
+            const searchInput = document.getElementById('globalSearchInput');
+            if (searchInput) searchInput.value = searchParam;
+        }, 100);
+    }
+
     if (getToken()) {
         showApp();
     } else {
@@ -62,5 +71,18 @@ document.addEventListener('keydown', e => {
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
         window.location.reload();
+    }
+});
+
+document.getElementById('globalSearchInput').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        triggerSearch();
+    }
+});
+
+document.getElementById('globalSearchInput').addEventListener('input', function (e) {
+    if (this.value.trim() === '' && currentSearchQuery !== '') {
+        currentSearchQuery = '';
+        triggerSearch();
     }
 });

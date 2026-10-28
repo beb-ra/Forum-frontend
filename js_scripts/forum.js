@@ -383,6 +383,10 @@ async function loadPosts() {
 
 	if (currentSubforumId !== null) url += `&subforumId=${currentSubforumId}`;
 
+	if (currentSearchQuery) {
+            url += `&search=${encodeURIComponent(currentSearchQuery)}`;
+        }
+
         const res = await fetch(url, {
             headers: token ? { 'Authorization': 'Bearer ' + token } : {}
         });
@@ -409,7 +413,9 @@ function renderPosts() {
     container.innerHTML = '';
 
     let labelText = '';
-    if (isShowingMyPosts) {
+    if (currentSearchQuery) {
+        labelText = `(поиск: "${currentSearchQuery}")`;
+    } else if (isShowingMyPosts) {
         labelText = currentSubforumId === null 
             ? '(мои посты)' 
             : `(мои посты в подфоруме: ${subforumName(currentSubforumId)})`;
@@ -1503,6 +1509,10 @@ function goToMainPage(e) {
     currentSubforumId = null;
     currentPostsPage = 1;
     updateNavUI();
+
+    hideAllSections();
+    document.getElementById('appSection').className = 'section';
+
     renderSubforums();
     loadPosts();
 }
@@ -1518,6 +1528,27 @@ function goToMyPosts(e) {
     currentSubforumId = null;
     currentPostsPage = 1;
     updateNavUI();
-    renderSubforums(); // Снимаем активный класс с подфорумов
+
+    hideAllSections();
+    document.getElementById('appSection').className = 'section';
+
+    renderSubforums();
+    loadPosts();
+}
+
+function triggerSearch() {
+    const input = document.getElementById('globalSearchInput');
+    currentSearchQuery = input.value.trim();
+    currentPostsPage = 1; 
+    
+    const params = new URLSearchParams();
+    if (isShowingMyPosts) params.set('my-posts', '1');
+    if (currentSubforumId !== null) params.set('subforum', currentSubforumId);
+    if (currentSearchQuery) params.set('search', currentSearchQuery);
+    
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    window.history.pushState({}, '', newUrl);
+
+    renderSubforums();
     loadPosts();
 }
