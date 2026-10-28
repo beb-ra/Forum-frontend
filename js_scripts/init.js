@@ -15,6 +15,8 @@ document.addEventListener('keydown', e => {
     const params = new URLSearchParams(window.location.search);
     const postId = params.get('post');
     const profileId = params.get('profile');
+    const subforumParam = params.get('subforum');
+    const myPostsParam = params.get('my-posts');
 
     if (getToken()) {
         try {
@@ -41,6 +43,13 @@ document.addEventListener('keydown', e => {
         await loadSubforums();
         showPostDetail(postId);
         return;
+    }
+    
+    if (myPostsParam) {
+        isShowingMyPosts = true;
+    }
+    if (subforumParam) {
+        currentSubforumId = parseInt(subforumParam, 10);
     }
 
     if (getToken()) {

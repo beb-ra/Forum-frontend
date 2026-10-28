@@ -25,6 +25,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
         let currentBanProfileId = null;
 	let currentPostImages = [];
 	let currentCommentImage = null;
+	let isShowingMyPosts = false;
 
         // утилиты
         function showMessage(text, isError = true) {
@@ -141,7 +142,11 @@ const API_URL = 'https://forum-6sgl.onrender.com';
         }
 
         function goBackToForum() {
-            window.location.href = window.location.pathname;
+            if (window.history.length > 1) {
+        	window.history.back();
+    	    } else {
+        	window.location.href = window.location.pathname;
+    	    }
         }
 
         // UI
@@ -165,6 +170,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
             await loadSubforums();
             await loadVotes();
             renderRoleBadges();
+	    updateNavUI();
             await loadPosts();
 
             hideAllSections();

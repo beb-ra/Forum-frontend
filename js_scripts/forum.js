@@ -51,9 +51,17 @@ function makeSubforumItem(name, id) {
     li.onclick = () => {
         currentSubforumId = id;
         currentPostsPage = 1;
+	updateNavUI();
         renderSubforums();
         renderSubforumSelect();
         loadPosts();
+
+	const params = new URLSearchParams();
+        if (isShowingMyPosts) params.set('my-posts', '1');
+        if (id !== null) params.set('subforum', id);
+        
+        const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+        window.history.pushState({}, '', newUrl);
     };
     return li;
 }
@@ -364,8 +372,16 @@ async function voteOnTarget(type, id, value) {
 async function loadPosts() {
     const token = getToken();
     try {
-        let url = `${API_URL}/api/posts?page=${currentPostsPage}&pageSize=${postsPerPage}`;
-        if (currentSubforumId !== null) url += `&subforumId=${currentSubforumId}`;
+        let url = '';
+        const uid = getCurrentUserId();
+
+        if (isShowingMyPosts && uid) {
+            url = `${API_URL}/api/posts/author/${uid}?page=${currentPostsPage}&pageSize=${postsPerPage}`;
+        } else {
+            url = `${API_URL}/api/posts?page=${currentPostsPage}&pageSize=${postsPerPage}`;
+        }
+
+	if (currentSubforumId !== null) url += `&subforumId=${currentSubforumId}`;
 
         const res = await fetch(url, {
             headers: token ? { 'Authorization': 'Bearer ' + token } : {}
@@ -392,9 +408,17 @@ function renderPosts() {
     const label = document.getElementById('postsFilterLabel');
     container.innerHTML = '';
 
-    label.textContent = currentSubforumId === null
-        ? '(все подфорумы)'
-        : '(' + subforumName(currentSubforumId) + ')';
+    let labelText = '';
+    if (isShowingMyPosts) {
+        labelText = currentSubforumId === null 
+            ? '(мои посты)' 
+            : `(мои посты в подфоруме: ${subforumName(currentSubforumId)})`;
+    } else {
+        labelText = currentSubforumId === null 
+            ? '(все подфорумы)' 
+            : `(${subforumName(currentSubforumId)})`;
+    }
+    label.textContent = labelText;
 
     if (posts.length === 0) {
         container.innerHTML = '<p>Постов пока нет.</p>';
@@ -1461,4 +1485,39 @@ async function deleteTag(id) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+}
+
+function updateNavUI() {
+    const myPostsNav = document.getElementById('navMyPosts');
+    if (isShowingMyPosts) {
+        myPostsNav.classList.add('active');
+    } else {
+        myPostsNav.classList.remove('active');
+    }
+}
+
+function goToMainPage(e) {
+    if (e) e.preventDefault();
+    window.history.pushState({}, '', window.location.pathname);
+    isShowingMyPosts = false;
+    currentSubforumId = null;
+    currentPostsPage = 1;
+    updateNavUI();
+    renderSubforums();
+    loadPosts();
+}
+
+function goToMyPosts(e) {
+    if (e) e.preventDefault();
+    if (!getToken()) {
+        showMessage('Войдите, чтобы увидеть свои посты');
+        return;
+    }
+    window.history.pushState({}, '', '?my-posts=1');
+    isShowingMyPosts = true;
+    currentSubforumId = null;
+    currentPostsPage = 1;
+    updateNavUI();
+    renderSubforums(); // Снимаем активный класс с подфорумов
+    loadPosts();
 }

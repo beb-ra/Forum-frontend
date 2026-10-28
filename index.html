@@ -7,8 +7,19 @@
 </head>
 <body>
     <header class="topbar">
-        <h1>Forum</h1>
-        <button class="profile-btn" title="Профиль" onclick="openOwnProfile()">👤</button>
+    <a href="?" class="logo" onclick="goToMainPage(event)">Forum</a>
+    
+    <div class="topbar-center">
+        <nav class="topbar-nav">
+            <a href="?my-posts=1" class="nav-link" id="navMyPosts" onclick="goToMyPosts(event)">Мои посты</a>
+        </nav>
+        <div class="topbar-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearchInput" placeholder="Поиск..." class="search-input">
+        </div>
+    </div>
+
+    <button class="profile-btn" title="Профиль" onclick="openOwnProfile()">👤</button>
     </header>
 
     <div id="message"></div>
