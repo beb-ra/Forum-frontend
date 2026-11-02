@@ -333,6 +333,28 @@
     </div>
 </div>
 
+<!-- Модальное окно: редактирование профиля -->
+<div id="profileEditModal" class="modal-overlay" onclick="if(event.target===this) closeProfileEditModal()">
+    <div class="modal">
+        <h2>Редактировать профиль</h2>
+        
+        <label>Аватарка:</label>
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 10px;">
+            <img id="editAvatarPreview" src="" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc;">
+            <button type="button" class="attach-btn" onclick="document.getElementById('avatarInput').click()">📎 Загрузить</button>
+            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+        </div>
+
+        <label for="editDescriptionInput">О себе:</label>
+        <textarea id="editDescriptionInput" rows="4" placeholder="Расскажите о себе..."></textarea>
+
+        <div class="modal-actions">
+            <button class="success" onclick="saveProfileChanges()">Сохранить</button>
+            <button class="logout" onclick="closeProfileEditModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
     <script src="js_scripts/core.js"></script>
     <script src="js_scripts/auth.js"></script>
     <script src="js_scripts/forum.js"></script>

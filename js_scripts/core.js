@@ -27,6 +27,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
 	let currentCommentImage = null;
 	let isShowingMyPosts = false;
 	let currentSearchQuery = '';
+	let tempAvatarUrl = null;
 
         // утилиты
         function showMessage(text, isError = true) {

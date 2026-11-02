@@ -48,9 +48,15 @@ async function showProfilePage(profileId) {
         const u = await res.json();
 
         let html = `
-            <div class="profile-row"><strong>ID:</strong> ${escapeHtml(String(u.userId ?? '—'))}</div>
-            <div class="profile-row"><strong>Имя пользователя:</strong> ${escapeHtml(u.username ?? '—')}</div>
-            <div class="profile-row"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
+            <div class="profile-header-info" style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                <img src="${getAvatarUrl(u)}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
+                <div>
+                    <div class="profile-row" style="margin: 0;"><strong>ID:</strong> ${escapeHtml(String(u.userId ?? '—'))}</div>
+                    <div class="profile-row" style="margin: 0;"><strong>Имя:</strong> ${escapeHtml(u.username ?? '—')}</div>
+                    <div class="profile-row" style="margin: 0;"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
+                </div>
+            </div>
+            ${u.description ? `<div class="profile-row"><strong>О себе:</strong> ${escapeHtml(u.description)}</div>` : ''}
         `;
         if (isOwn) {
     html += `
@@ -161,6 +167,11 @@ async function showProfilePage(profileId) {
             logoutBtn.style.display = 'inline-block';
             deleteAccountBtn.style.display = 'inline-block';
             deleteAccountBtn.onclick = askDeleteOwnAccount;
+
+	    rolesBtn.style.display = 'inline-block'; 
+            rolesBtn.textContent = 'Редактировать профиль';
+            rolesBtn.className = 'small-btn';
+            rolesBtn.onclick = () => openProfileEditModal(u);
         } else {
             if (isGlobalAdmin()) {
                 rolesBtn.style.display = 'inline-block';
@@ -798,6 +809,71 @@ async function savePassword() {
             const text = await res.text();
             showMessage(`Ошибка: ${text || res.status}`);
         }
+    } catch (e) {
+        showMessage('Ошибка сети: ' + e.message);
+    }
+}
+
+function getAvatarUrl(user) {
+    if (user.imageUrl && user.imageUrl.trim() !== '') {
+        return user.imageUrl;
+    }
+
+    // svg-аватарка
+    const defaultSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>`;
+    
+    return `data:image/svg+xml;utf8,${defaultSvg}`;
+}
+
+function openProfileEditModal(user) {
+    tempAvatarUrl = user.imageUrl || null;
+    document.getElementById('editAvatarPreview').src = getAvatarUrl(user);
+    document.getElementById('editDescriptionInput').value = user.description || '';
+    document.getElementById('profileEditModal').classList.add('open');
+}
+
+function closeProfileEditModal() {
+    document.getElementById('profileEditModal').classList.remove('open');
+}
+
+async function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const urls = await uploadImages([file]);
+        tempAvatarUrl = urls[0];
+        document.getElementById('editAvatarPreview').src = tempAvatarUrl;
+    } catch (e) {
+        showMessage('Ошибка загрузки аватарки: ' + e.message);
+    }
+    event.target.value = '';
+}
+
+async function saveProfileChanges() {
+    const token = getToken();
+    if (!token) return;
+
+    const description = document.getElementById('editDescriptionInput').value.trim();
+
+    try {
+        const res = await fetch(`${API_URL}/api/users/me/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ imageUrl: tempAvatarUrl, description: description })
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка сохранения профиля: ' + res.status);
+            return;
+        }
+        closeProfileEditModal();
+        
+        const currentId = getCurrentUserId();
+        await showProfilePage(currentId);
     } catch (e) {
         showMessage('Ошибка сети: ' + e.message);
     }
