@@ -659,6 +659,8 @@ function startEditPost() {
     const p = currentPost;
     if (!p) return;
 
+    currentPostImages = (p.images || []).map(img => img.imageUrl);
+
     const container = document.getElementById('postDetailContent');
     container.innerHTML = `
         <h2>Редактирование поста</h2>
@@ -666,6 +668,15 @@ function startEditPost() {
         <input id="editPostTitle" type="text">
         <label style="font-size:14px; color:#555;">Текст:</label>
         <textarea id="editPostContent" rows="6"></textarea>
+        
+        <div id="editPostImagesPreview" class="images-preview"></div>
+        
+        <div class="action-row">
+            <button type="button" class="attach-btn" onclick="document.getElementById('editPostImagesInput').click()">📎</button>
+            <input type="file" id="editPostImagesInput" multiple accept="image/*" style="display: none;" onchange="handleEditPostImageUpload(event)">
+            <span id="editPostImageError" class="error-text"></span>
+        </div>
+
         <div class="form-actions">
             <button class="success" onclick="saveEditedPost()">Сохранить</button>
             <button class="logout" onclick="showPostDetail(${currentPostId})">Отмена</button>
@@ -673,6 +684,53 @@ function startEditPost() {
     `;
     document.getElementById('editPostTitle').value = p.title;
     document.getElementById('editPostContent').value = p.content;
+
+    renderEditPostImagesPreview();
+}
+
+async function handleEditPostImageUpload(event) {
+    const files = event.target.files;
+    const errorSpan = document.getElementById('editPostImageError');
+    if (errorSpan) errorSpan.textContent = '';
+
+    if (!files || files.length === 0) return;
+
+    if (currentPostImages.length + files.length > 4) {
+        if (errorSpan) errorSpan.textContent = 'Нельзя прикрепить больше 4 изображений';
+        event.target.value = '';
+        return;
+    }
+    try {
+        if (errorSpan) errorSpan.textContent = 'Загрузка...';
+        const urls = await uploadImages(files);
+        currentPostImages = currentPostImages.concat(urls);
+        renderEditPostImagesPreview();
+        if (errorSpan) errorSpan.textContent = '';
+    } catch (e) {
+        if (errorSpan) errorSpan.textContent = 'Ошибка: ' + e.message;
+    }
+    event.target.value = '';
+}
+
+function renderEditPostImagesPreview() {
+    const container = document.getElementById('editPostImagesPreview');
+    if (!container) return; 
+    
+    container.innerHTML = '';
+    currentPostImages.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.className = 'preview-img-wrapper';
+        div.innerHTML = `
+            <img src="${url}" alt="preview">
+            <button class="remove-img-btn" onclick="removeEditPostImage(${index})">×</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function removeEditPostImage(index) {
+    currentPostImages.splice(index, 1);
+    renderEditPostImagesPreview();
 }
 
 async function saveEditedPost() {
@@ -694,7 +752,8 @@ async function saveEditedPost() {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ ...currentPost, title, content })
+            body: JSON.stringify({ ...currentPost, title, content,
+		images: currentPostImages.map(url => ({ imageUrl: url }))  })
         });
 
         if (!res.ok) {
@@ -827,7 +886,7 @@ function createCommentElement(node, isReply = false) {
             ${editBtn}
             ${delBtn}
         </div>
-        <div>${escapeHtml(node.content)}</div>
+        <div>${node.content ? escapeHtml(node.content) : ''}</div>
         ${commentImageHtml}
         <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
             <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
@@ -962,7 +1021,10 @@ async function submitReply(parentCommentId) {
     const ta = document.getElementById('reply-text-' + parentCommentId);
     if (!ta) return;
     const content = ta.value.trim();
-    if (!content) { showMessage('Введите текст ответа'); return; }
+    if (!content && !currentCommentImage) { 
+        showMessage('Введите текст или прикрепите картинку'); 
+        return; 
+    }
 
     const pid = Number(currentPostId);
     if (!pid || isNaN(pid)) {
@@ -1010,6 +1072,8 @@ function startEditComment(commentId) {
     const div = document.getElementById('comment-' + commentId);
     if (!div) return;
 
+    currentCommentImage = c.imageUrl || null;
+
     const content = div.querySelector('div:nth-child(2)') ? div.querySelector('div:nth-child(2)').innerText : '';
 
     div.innerHTML = `
@@ -1017,11 +1081,45 @@ function startEditComment(commentId) {
             <strong>${escapeHtml(usersCache[c?.authorId] || 'Пользователь')}</strong> · редактирование
         </div>
         <textarea id="editCommentText-${commentId}" rows="3">${escapeHtml(content)}</textarea>
+        
+        <div id="editCommentImagePreview-${commentId}" class="images-preview">
+            ${currentCommentImage ? `
+                <div class="preview-img-wrapper">
+                    <img src="${currentCommentImage}" alt="preview">
+                    <button class="remove-img-btn" onclick="currentCommentImage = null; this.parentElement.remove();">×</button>
+                </div>` : ''}
+        </div>
+        
+        <div class="action-row">
+            <button type="button" class="attach-btn" onclick="document.getElementById('editCommentImageInput-${commentId}').click()">📎</button>
+            <input type="file" id="editCommentImageInput-${commentId}" accept="image/*" style="display: none;" onchange="handleEditCommentImageUpload(event, ${commentId})">
+        </div>
+
         <div class="form-actions">
             <button class="success" onclick="saveEditedComment(${commentId})">Сохранить</button>
             <button class="logout" onclick="loadComments(${currentPostId}, ${currentCommentsCanModerate})">Отмена</button>
         </div>
     `;
+    document.getElementById('editCommentText-' + commentId).value = c.content || '';
+}
+
+async function handleEditCommentImageUpload(event, commentId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+        const urls = await uploadImages([file]);
+        currentCommentImage = urls[0];
+        
+        document.getElementById('editCommentImagePreview-' + commentId).innerHTML = `
+            <div class="preview-img-wrapper">
+                <img src="${currentCommentImage}" alt="preview">
+                <button class="remove-img-btn" onclick="currentCommentImage = null; this.parentElement.remove();">×</button>
+            </div>
+        `;
+    } catch (e) {
+        showMessage('Ошибка загрузки: ' + e.message);
+    }
+    event.target.value = '';
 }
 
 async function saveEditedComment(commentId) {
@@ -1031,7 +1129,11 @@ async function saveEditedComment(commentId) {
     const textarea = document.getElementById('editCommentText-' + commentId);
     if (!textarea) return;
     const content = textarea.value.trim();
-    if (!content) { showMessage('Введите текст комментария'); return; }
+
+    if (!content && !currentCommentImage) { 
+        showMessage('Введите текст или прикрепите картинку'); 
+        return; 
+    }
 
     try {
         const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
@@ -1040,7 +1142,7 @@ async function saveEditedComment(commentId) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ content: content })
+            body: JSON.stringify({ content: content, imageUrl: currentCommentImage })
         });
 
         if (!res.ok) {
@@ -1085,8 +1187,10 @@ async function submitComment() {
 
     const contentEl = document.getElementById('newCommentContent');
     const content = contentEl.value.trim();
-    if (!content) { showMessage('Введите текст комментария'); return; }
-
+    if (!content && !currentCommentImage) { 
+        showMessage('Введите текст или прикрепите картинку'); 
+        return; 
+    }
     const pid = Number(currentPostId);
     if (!pid || isNaN(pid)) {
         showMessage('Не удалось определить пост');
