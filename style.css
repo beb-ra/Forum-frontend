@@ -799,7 +799,7 @@ button.pin-btn.active {
     border-bottom: 1px solid #ccc;
     padding-bottom: 5px;
     margin-bottom: 15px;
-    margin-top: 20px;
+    margin-top: 0px;
 }
 
 .posts-header h2 {
@@ -901,6 +901,15 @@ button.pin-btn.active {
 }
 .tag-del-btn:hover {
     background: #f8d7da;
+}
+
+.tag-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.tag-link:hover {
+    text-decoration: underline;
 }
 
 #confirmModal {

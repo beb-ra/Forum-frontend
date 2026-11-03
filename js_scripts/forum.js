@@ -50,6 +50,7 @@ function makeSubforumItem(name, id) {
 
     li.onclick = () => {
         currentSubforumId = id;
+	currentTagId = null;
         currentPostsPage = 1;
 	updateNavUI();
         renderSubforums();
@@ -382,7 +383,7 @@ async function loadPosts() {
         }
 
 	if (currentSubforumId !== null) url += `&subforumId=${currentSubforumId}`;
-
+	if (currentTagId !== null) url += `&tagId=${currentTagId}`;
 	if (currentSearchQuery) {
             url += `&search=${encodeURIComponent(currentSearchQuery)}`;
         }
@@ -424,6 +425,9 @@ function renderPosts() {
             ? '(все подфорумы)' 
             : `(${subforumName(currentSubforumId)})`;
     }
+    if (currentTagId) {
+        labelText += `(тег: ${tagName(currentTagId)})`;
+    }
     label.textContent = labelText;
 
     if (posts.length === 0) {
@@ -456,7 +460,7 @@ function renderPosts() {
                 <a class="author-link" href="?profile=${p.authorId}">
                     ${escapeHtml(author)}
                 </a>
-                ${tag ? ` | Тег: ${escapeHtml(tag)}` : ''}
+                ${tag ? ` | Тег: <a href="?tag=${p.tagId}" class="tag-link" onclick="goToTag(event, ${p.tagId})">${escapeHtml(tag)}</a>` : ''}
                 ${renderVoteControls('post', p.postId, p.rating ?? 0)}
             </div>
         `;
@@ -488,6 +492,8 @@ async function createPost() {
 
     const sel = document.getElementById('postSubforumId');
     const subforumId = parseInt(sel.value, 10);
+    const tagSel = document.getElementById('postTagId').value;
+    const tagId = tagSel ? parseInt(tagSel, 10) : null;
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
 
@@ -507,7 +513,7 @@ async function createPost() {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ subforumId, title, content, imageUrls: currentPostImages })
+            body: JSON.stringify({ subforumId, title, content, tagId, imageUrls: currentPostImages })
         });
 
         if (!res.ok) {
@@ -523,6 +529,7 @@ async function createPost() {
             previewContainer.innerHTML = '';
         }
         
+	closeCreatePostModal();
         currentPostImages = [];
         currentPostsPage = 1;
         loadPosts();
@@ -1611,6 +1618,7 @@ function goToMainPage(e) {
     window.history.pushState({}, '', window.location.pathname);
     isShowingMyPosts = false;
     currentSubforumId = null;
+    currentTagId = null;
     currentPostsPage = 1;
     updateNavUI();
 
@@ -1630,6 +1638,7 @@ function goToMyPosts(e) {
     window.history.pushState({}, '', '?my-posts=1');
     isShowingMyPosts = true;
     currentSubforumId = null;
+    currentTagId = null;
     currentPostsPage = 1;
     updateNavUI();
 
@@ -1644,6 +1653,7 @@ function triggerSearch() {
     const input = document.getElementById('globalSearchInput');
     currentSearchQuery = input.value.trim();
     currentPostsPage = 1; 
+    currentTagId = null;
     
     const params = new URLSearchParams();
     if (isShowingMyPosts) params.set('my-posts', '1');
@@ -1654,5 +1664,56 @@ function triggerSearch() {
     window.history.pushState({}, '', newUrl);
 
     renderSubforums();
+    loadPosts();
+}
+
+function openCreatePostModal() {
+    if (!getToken()) {
+        showMessage('Сначала войдите');
+        return;
+    }
+    
+    renderSubforumSelect(); // Обновляем список подфорумов
+    renderPostTagSelect();  // Обновляем список тегов
+    
+    document.getElementById('postTitle').value = '';
+    document.getElementById('postContent').value = '';
+    currentPostImages = [];
+    renderPostImagesPreview(); // Очищаем превью картинок
+    
+    document.getElementById('createPostModal').classList.add('open');
+}
+
+function closeCreatePostModal() {
+    document.getElementById('createPostModal').classList.remove('open');
+}
+
+function renderPostTagSelect() {
+    const sel = document.getElementById('postTagId');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Без тега —</option>';
+
+    Object.entries(tagsCache).forEach(([id, name]) => {
+        const o = document.createElement('option');
+        o.value = id;
+        o.textContent = name;
+        sel.appendChild(o);
+    });
+}
+
+function goToTag(e, tagId) {
+    if (e) e.preventDefault();
+    currentTagId = tagId;
+    currentPostsPage = 1;
+    
+    const params = new URLSearchParams();
+    if (isShowingMyPosts) params.set('my-posts', '1');
+    if (currentSubforumId !== null) params.set('subforum', currentSubforumId);
+    if (currentTagId !== null) params.set('tag', currentTagId);
+    if (currentSearchQuery) params.set('search', currentSearchQuery);
+    
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    window.history.pushState({}, '', newUrl);
+
     loadPosts();
 }

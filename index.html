@@ -64,36 +64,19 @@
                 <ul id="subforumsList"></ul>
             </aside>
 
-            <main class="content">
-    <h2 id="createPostToggle" class="toggle-header" onclick="toggleCreatePostForm()">
-        Создать пост <span id="createPostArrow" class="toggle-arrow">▼</span>
-    </h2>
-    
-    <div id="createPostForm" style="display: none;">
-        <label for="postSubforumId" class="input-label">Подфорум:</label>
-        <select id="postSubforumId"></select>
-        <input id="postTitle" type="text" placeholder="Заголовок">
-        <textarea id="postContent" rows="3" placeholder="Текст поста"></textarea>
-
-        <div id="postImagesPreview" class="images-preview"></div>
-
-        <div class="action-row">
-            <button type="button" class="attach-btn" title="Прикрепить изображения" onclick="document.getElementById('postImagesInput').click()">📎</button>
-            <input type="file" id="postImagesInput" multiple accept="image/*" style="display: none;" onchange="handlePostImageUpload(event)">
-            <span id="postImageError" class="error-text"></span>
-            <button onclick="createPost()">Опубликовать</button>
-        </div>
+	<main class="content">
+    		<div class="posts-header">
+    		<h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
+    		<div style="display: flex; column-gap: 10px; align-items: center;">
+        		<button class="success" onclick="openCreatePostModal()">Создать пост</button>
+        		<button class="btn-gray-icon" onclick="loadPosts()" title="Обновить список">↻</button>
+    		</div>
+    	</div>
+    	<div id="postsList"></div>
+    	<div id="pagination" class="pagination"></div>
+	</main>
     </div>
-
-    <div class="posts-header">
-    	<h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
-    	<button class="btn-gray-icon" onclick="loadPosts()" title="Обновить список">↻</button>
-    </div>
-    <div id="postsList"></div>
-    <div id="pagination" class="pagination"></div>
-</main>
-        </div>
-    </div>
+</div>
 
     <!-- Страница поста -->
     <div id="postDetailSection" class="section hidden">
@@ -351,6 +334,37 @@
         <div class="modal-actions">
             <button class="success" onclick="saveProfileChanges()">Сохранить</button>
             <button class="logout" onclick="closeProfileEditModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно создание поста -->
+<div id="createPostModal" class="modal-overlay" onclick="if(event.target===this) closeCreatePostModal()">
+    <div class="modal" style="max-width: 600px;">
+        <h2>Создать пост</h2>
+        
+        <label for="postSubforumId" class="input-label">Подфорум:</label>
+        <select id="postSubforumId"></select>
+
+        <label for="postTagId" class="input-label">Тег (необязательно):</label>
+        <select id="postTagId">
+            <option value="">— Без тега —</option>
+        </select>
+
+        <input id="postTitle" type="text" placeholder="Заголовок">
+        <textarea id="postContent" rows="4" placeholder="Текст поста"></textarea>
+
+        <div id="postImagesPreview" class="images-preview"></div>
+
+        <div class="action-row">
+            <button type="button" class="attach-btn" onclick="document.getElementById('postImagesInput').click()">📎</button>
+            <input type="file" id="postImagesInput" multiple accept="image/*" style="display: none;" onchange="handlePostImageUpload(event)">
+            <span id="postImageError" class="error-text"></span>
+        </div>
+
+        <div class="modal-actions">
+            <button class="success" onclick="createPost()">Опубликовать</button>
+            <button class="logout" onclick="closeCreatePostModal()">Отмена</button>
         </div>
     </div>
 </div>

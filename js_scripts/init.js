@@ -18,6 +18,7 @@ document.addEventListener('keydown', e => {
     const subforumParam = params.get('subforum');
     const myPostsParam = params.get('my-posts');
     const searchParam = params.get('search');
+    const tagParam = params.get('tag');
 
     if (getToken()) {
         try {
@@ -51,6 +52,9 @@ document.addEventListener('keydown', e => {
     }
     if (subforumParam) {
         currentSubforumId = parseInt(subforumParam, 10);
+    }
+    if (tagParam) {
+        currentTagId = parseInt(tagParam, 10);
     }
 
     if (searchParam) {
