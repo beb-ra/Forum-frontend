@@ -55,7 +55,10 @@
         		<strong>Вы вошли как:</strong> <span id="currentUser"></span>
         		<span id="roleBadges"></span>
     		</div>
-    		<button id="adminToolsBtn" class="admin-tools-btn" title="Инструменты администратора" onclick="openAdminToolsModal()" style="display: none;">🛠️</button>
+    		<div style="display: flex; gap: 10px;">
+        		<button id="moderatorToolsBtn" class="admin-tools-btn" title="Инструменты модератора" onclick="openModeratorToolsModal()" style="display: none;">🛡️</button>
+        		<button id="adminToolsBtn" class="admin-tools-btn" title="Инструменты администратора" onclick="openAdminToolsModal()" style="display: none;">🛠️</button>
+    		</div>
 	</div>
 
         <div class="layout">
@@ -279,6 +282,7 @@
             <button class="admin-tab active" onclick="switchAdminTab('users')">Пользователи</button>
             <button class="admin-tab" onclick="switchAdminTab('tags')">Теги</button>
 	    <button class="admin-tab" onclick="switchAdminTab('subforums')">Подфорумы</button>
+	    <button class="admin-tab" onclick="switchAdminTab('moderation')">На модерации</button>
         </div>
 
         <!-- Содержимое вкладки пользователи -->
@@ -310,13 +314,19 @@
             </ul>
         </div>
 
+	<div id="adminTabModeration" class="admin-tab-content" style="display: none;">
+    		<ul id="adminPendingList" class="admin-list">
+        		<li style="color:#888; font-style:italic;">Загрузка...</li>
+    		</ul>
+	</div>
+
         <div class="modal-actions">
             <button class="logout" onclick="closeAdminToolsModal()">Закрыть</button>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно: редактирование профиля -->
+<!-- Модальное окно редактирование профиля -->
 <div id="profileEditModal" class="modal-overlay" onclick="if(event.target===this) closeProfileEditModal()">
     <div class="modal">
         <h2>Редактировать профиль</h2>
@@ -365,6 +375,34 @@
         <div class="modal-actions">
             <button class="success" onclick="createPost()">Опубликовать</button>
             <button class="logout" onclick="closeCreatePostModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно инструменты модератора -->
+<div id="moderatorToolsModal" class="modal-overlay" onclick="if(event.target===this) closeModeratorToolsModal()">
+    <div class="modal" style="max-width: 600px;">
+        <h2>Инструменты модератора</h2>
+        
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchModTab('users')">Пользователи</button>
+            <button class="admin-tab" onclick="switchModTab('pending')">На модерации</button>
+        </div>
+
+        <div id="modTabUsers" class="admin-tab-content">
+            <ul id="modUsersList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+        <div id="modTabPending" class="admin-tab-content" style="display: none;">
+            <ul id="modPendingList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+        <div class="modal-actions">
+            <button class="logout" onclick="closeModeratorToolsModal()">Закрыть</button>
         </div>
     </div>
 </div>

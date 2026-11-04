@@ -169,6 +169,9 @@ const API_URL = 'https://forum-6sgl.onrender.com';
 
 	    document.getElementById('adminToolsBtn').style.display = isGlobalAdmin() ? 'block' : 'none';
 
+	    const isMod = getModeratedSubforumIds().length > 0;
+	    document.getElementById('moderatorToolsBtn').style.display = (isMod && !isGlobalAdmin()) ? 'inline-flex' : 'none';
+
             await ensureTagsLoaded();
             await loadSubforums();
             await loadVotes();

@@ -7,6 +7,7 @@ document.addEventListener('keydown', e => {
 	closeEmailModal();
         closePasswordModal();
 	closeAdminToolsModal();
+	closeModeratorToolsModal();
     }
 });
 

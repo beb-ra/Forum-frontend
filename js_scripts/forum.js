@@ -1482,6 +1482,10 @@ function switchAdminTab(tab) {
         document.querySelector('.admin-tabs button:nth-child(3)').classList.add('active');
         document.getElementById('adminTabSubforums').style.display = 'block';
         loadAdminSubforums();
+    } else if (tab === 'moderation') {
+        document.querySelector('.admin-tabs button:nth-child(4)').classList.add('active');
+        document.getElementById('adminTabModeration').style.display = 'block';
+        loadPendingModeration('adminPendingList');
     }
 }
 
@@ -1716,4 +1720,186 @@ function goToTag(e, tagId) {
     window.history.pushState({}, '', newUrl);
 
     loadPosts();
+}
+
+
+function openModeratorToolsModal() {
+    document.getElementById('moderatorToolsModal').classList.add('open');
+    switchModTab('users');
+}
+
+function closeModeratorToolsModal() {
+    document.getElementById('moderatorToolsModal').classList.remove('open');
+}
+
+function switchModTab(tab) {
+    document.querySelectorAll('#moderatorToolsModal .admin-tab').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('#moderatorToolsModal .admin-tab-content').forEach(content => content.style.display = 'none');
+
+    if (tab === 'users') {
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(1)').classList.add('active');
+        document.getElementById('modTabUsers').style.display = 'block';
+        loadModeratorUsers();
+    } else if (tab === 'pending') {
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(2)').classList.add('active');
+        document.getElementById('modTabPending').style.display = 'block';
+        loadPendingModeration('modPendingList');
+    }
+}
+
+async function loadModeratorUsers() {
+    const list = document.getElementById('modUsersList');
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/api/moderation/users`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Ошибка доступа');
+        
+        const users = await res.json();
+        if (users.length === 0) {
+            list.innerHTML = '<li>Пользователей нет</li>';
+            return;
+        }
+
+        list.innerHTML = '';
+        users.forEach(u => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div>
+                    <strong>${escapeHtml(u.username)}</strong> <span style="color:#888;">(ID: ${u.userId})</span>
+                </div>
+                <a href="?profile=${u.userId}" class="small-btn" style="text-decoration:none;">Профиль</a>
+            `;
+            list.appendChild(li);
+        });
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+async function loadPendingModeration(containerId) {
+    const list = document.getElementById(containerId);
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/api/moderation/pending`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Ошибка доступа');
+
+        const data = await res.json();
+        const { posts, comments } = data;
+
+        if (posts.length === 0 && comments.length === 0) {
+            list.innerHTML = '<li>Очередь пуста 🎉</li>';
+            return;
+        }
+
+        const authorIds = [
+            ...posts.map(p => p.authorId),
+            ...comments.map(c => c.authorId)
+        ];
+        await ensureUsernamesLoaded(authorIds);
+
+        list.innerHTML = '';
+
+        const btnStyle = 'flex: 1; margin: 0; padding: 8px 0; font-size: 13px; text-align: center; box-sizing: border-box;';
+
+        posts.forEach(p => {
+            const li = document.createElement('li');
+            li.style.flexDirection = 'column';
+            li.style.alignItems = 'flex-start';
+            li.style.padding = '15px';
+            li.style.background = '#fff';
+            li.style.marginBottom = '10px';
+            li.style.borderRadius = '6px';
+            li.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+            const imagesHtml = (p.images && p.images.length > 0)
+                ? `<div class="post-images-container" style="margin: 10px 0;">${p.images.map(img => `<img src="${img.imageUrl}" class="post-image" style="max-height: 120px; max-width: 100%; object-fit: contain;">`).join('')}</div>`
+                : '';
+
+            const authorName = usersCache[p.authorId] || ('ID ' + p.authorId);
+
+            li.innerHTML = `
+                <div style="margin-bottom: 5px; font-size: 16px;">
+                    <strong>Пост:</strong> 
+                    <a href="?post=${p.postId}" target="_blank" class="post-title-link">${escapeHtml(p.title)}</a>
+                </div>
+                <div style="margin-bottom: 5px; color: #333; font-size: 14px;">${escapeHtml(p.content)}</div>
+                ${imagesHtml}
+                <div style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                    Автор: <a href="?profile=${p.authorId}" target="_blank" class="author-link"><strong>${escapeHtml(authorName)}</strong></a> 
+                    | Подфорум: ${escapeHtml(subforumName(p.subforumId))}
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
+                    <button class="success" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'approve', '${containerId}')">Одобрить</button>
+                    <button class="danger" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'reject', '${containerId}')">Удалить</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+
+        comments.forEach(c => {
+            const li = document.createElement('li');
+            li.style.flexDirection = 'column';
+            li.style.alignItems = 'flex-start';
+            li.style.padding = '15px';
+            li.style.background = '#fff';
+            li.style.marginBottom = '10px';
+            li.style.borderRadius = '6px';
+            li.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+            const imageHtml = c.imageUrl 
+                ? `<img src="${c.imageUrl}" class="comment-image" style="max-height: 120px; max-width: 100%; object-fit: contain; margin: 10px 0;">` 
+                : '';
+
+            const authorName = usersCache[c.authorId] || ('ID ' + c.authorId);
+
+            li.innerHTML = `
+                <div style="margin-bottom: 5px; font-size: 14px;">
+                    <strong>Комментарий:</strong> 
+                    <a href="?post=${c.postId}#comment-${c.commentId}" target="_blank" class="post-title-link">${escapeHtml(c.content || '')}</a>
+                </div>
+                ${imageHtml}
+                <div style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                    Автор: <a href="?profile=${c.authorId}" target="_blank" class="author-link"><strong>${escapeHtml(authorName)}</strong></a> 
+                    | <a href="?post=${c.postId}" target="_blank" class="post-title-link">Пост: ${escapeHtml(c.postTitle || 'Пост')}</a>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
+                    <button class="success" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'approve', '${containerId}')">Одобрить</button>
+                    <button class="danger" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'reject', '${containerId}')">Удалить</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+async function moderateItem(type, id, action, containerId) {
+    const token = getToken();
+    const url = `${API_URL}/api/moderation/${type}/${id}/${action}`;
+
+    try {
+        const res = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) {
+            showMessage('Ошибка: ' + res.status);
+            return;
+        }
+        showMessage(action === 'approve' ? 'Одобрено!' : 'Удалено!', false);
+        loadPendingModeration(containerId); // Перезагружаем очередь
+    } catch (e) {
+        showMessage('Ошибка: ' + e.message);
+    }
 }
