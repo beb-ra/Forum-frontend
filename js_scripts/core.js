@@ -260,12 +260,7 @@ function closeAdminToolsModal() {
         .forEach(id => document.getElementById(id).className = 'section hidden');
 
 	const loading = document.getElementById('loadingSection');
-    if (loading && !loading.classList.contains('hidden')) {
-        loading.style.opacity = '0';
-        clearTimeout(loadingTimeout);
-        loadingTimeout = setTimeout(() => {
-            loading.className = 'section hidden';
-            loading.style.opacity = '';
-        }, 400);
+        if (loading) {
+            loading.classList.add('hidden');
+        }
     }
-}

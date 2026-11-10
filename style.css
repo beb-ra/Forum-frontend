@@ -917,7 +917,28 @@ button.pin-btn.active {
 }
 
 #loadingSection {
-    transition: opacity 0.4s ease;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    padding-top: 80px;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    opacity: 1;
+    visibility: visible;
+}
+
+#loadingSection.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+#loadingSection p {
+    font-size: 20px;
+    color: #888;
+    font-weight: bold;
 }
 
         @media (max-width: 600px) {
