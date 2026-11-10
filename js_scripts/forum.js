@@ -467,6 +467,7 @@ function renderPosts() {
                     ${escapeHtml(author)}
                 </a>
                 ${tag ? ` | Тег: <a href="?tag=${p.tagId}" class="tag-link" onclick="goToTag(event, ${p.tagId})">${escapeHtml(tag)}</a>` : ''}
+                ${p.commentCount ? `| <a class="post-title-link" href="?post=${p.postId}">💬</a> ${p.commentCount}` : ''} 
                 ${renderVoteControls('post', p.postId, p.rating ?? 0)}
             </div>
         `;
