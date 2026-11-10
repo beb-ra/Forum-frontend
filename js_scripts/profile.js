@@ -28,7 +28,7 @@ async function showProfilePage(profileId) {
 
     title.textContent = isOwn ? 'Мой профиль' : 'Профиль пользователя';
 
-    content.innerHTML = '<p>Загрузка...</p>';
+    content.innerHTML = '';
 
     try {
         const url = isOwn

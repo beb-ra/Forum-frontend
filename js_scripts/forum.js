@@ -554,7 +554,7 @@ async function showPostDetail(postId) {
 
     const token = getToken();
     const container = document.getElementById('postDetailContent');
-    container.innerHTML = '<p>Загрузка...</p>';
+    container.innerHTML = '';
 
     try {
         await loadVotes();
