@@ -79,6 +79,24 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
+window.addEventListener('scroll', function() {
+    const btn = document.getElementById('backToTopBtn');
+    if (!btn) return;
+
+    if (window.scrollY > 300) {
+        btn.style.display = 'block';
+    } else {
+        btn.style.display = 'none';
+    }
+});
+
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
 document.getElementById('globalSearchInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         triggerSearch();

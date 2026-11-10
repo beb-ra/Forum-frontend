@@ -94,7 +94,7 @@
     		<div id="commentImagePreview" class="images-preview"></div>
     
     		<div class="action-row">
-        		<button type="button" class="attach-btn" onclick="document.getElementById('commentImageInput').click()">📎			</button>
+        		<button type="button" id="commentAttachBtn" class="attach-btn" onclick="document.getElementById('commentImageInput').click()">📎			</button>
         		<input type="file" id="commentImageInput" accept="image/*" style="display: none;" onchange="handleCommentImageUpload(event)">
         		<button onclick="submitComment(this)">Отправить</button>
     		</div>
@@ -367,7 +367,7 @@
         <div id="postImagesPreview" class="images-preview"></div>
 
         <div class="action-row">
-            <button type="button" class="attach-btn" onclick="document.getElementById('postImagesInput').click()">📎</button>
+            <button type="button" id="postAttachBtn" class="attach-btn" onclick="document.getElementById('postImagesInput').click()">📎</button>
             <input type="file" id="postImagesInput" multiple accept="image/*" style="display: none;" onchange="handlePostImageUpload(event)">
             <span id="postImageError" class="error-text"></span>
         </div>
@@ -406,6 +406,7 @@
         </div>
     </div>
 </div>
+    <button id="backToTopBtn" onclick="scrollToTop()" title="Наверх">↑</button>
 
     <script src="js_scripts/core.js"></script>
     <script src="js_scripts/auth.js"></script>

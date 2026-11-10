@@ -687,7 +687,7 @@ function startEditPost() {
         <div id="editPostImagesPreview" class="images-preview"></div>
         
         <div class="action-row">
-            <button type="button" class="attach-btn" onclick="document.getElementById('editPostImagesInput').click()">📎</button>
+            <button type="button" id="editPostAttachBtn" class="attach-btn" onclick="document.getElementById('editPostImagesInput').click()">📎</button>
             <input type="file" id="editPostImagesInput" multiple accept="image/*" style="display: none;" onchange="handleEditPostImageUpload(event)">
             <span id="editPostImageError" class="error-text"></span>
         </div>
@@ -701,6 +701,7 @@ function startEditPost() {
     document.getElementById('editPostContent').value = p.content;
 
     renderEditPostImagesPreview();
+    updateAttachButtons();
 }
 
 async function handleEditPostImageUpload(event) {
@@ -720,6 +721,7 @@ async function handleEditPostImageUpload(event) {
         const urls = await uploadImages(files);
         currentPostImages = currentPostImages.concat(urls);
         renderEditPostImagesPreview();
+	updateAttachButtons();
         if (errorSpan) errorSpan.textContent = '';
     } catch (e) {
         if (errorSpan) errorSpan.textContent = 'Ошибка: ' + e.message;
@@ -746,6 +748,7 @@ function renderEditPostImagesPreview() {
 function removeEditPostImage(index) {
     currentPostImages.splice(index, 1);
     renderEditPostImagesPreview();
+    updateAttachButtons();
 }
 
 async function saveEditedPost(btn) {
@@ -1109,12 +1112,12 @@ function startEditComment(commentId) {
             ${currentCommentImage ? `
                 <div class="preview-img-wrapper">
                     <img src="${currentCommentImage}" alt="preview">
-                    <button class="remove-img-btn" onclick="currentCommentImage = null; this.parentElement.remove();">×</button>
+                    <button class="remove-img-btn" onclick="removeEditCommentImage(${commentId})">×</button>
                 </div>` : ''}
         </div>
         
         <div class="action-row">
-            <button type="button" class="attach-btn" onclick="document.getElementById('editCommentImageInput-${commentId}').click()">📎</button>
+            <button type="button" id="editCommentAttachBtn-${commentId}" class="attach-btn" onclick="document.getElementById('editCommentImageInput-${commentId}').click() style="display: ${currentCommentImage ? 'none' : 'inline-block'};">📎</button>
             <input type="file" id="editCommentImageInput-${commentId}" accept="image/*" style="display: none;" onchange="handleEditCommentImageUpload(event, ${commentId})">
         </div>
 
@@ -1139,6 +1142,8 @@ async function handleEditCommentImageUpload(event, commentId) {
                 <button class="remove-img-btn" onclick="currentCommentImage = null; this.parentElement.remove();">×</button>
             </div>
         `;
+	const btn = document.getElementById('editCommentAttachBtn-' + commentId);
+        if (btn) btn.style.display = 'none';
     } catch (e) {
         showMessage('Ошибка загрузки: ' + e.message);
     }
@@ -1260,6 +1265,7 @@ async function submitComment(btn) {
 	currentCommentImage = null;
 	const cPreview = document.getElementById('commentImagePreview');
 	if (cPreview) cPreview.innerHTML = '';
+	updateAttachButtons();
         await loadComments(pid, currentCommentsCanModerate, false);
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
@@ -1401,6 +1407,7 @@ async function handlePostImageUpload(event) {
         const urls = await uploadImages(files);
         currentPostImages = currentPostImages.concat(urls);
         renderPostImagesPreview();
+	updateAttachButtons();
         if (errorSpan) errorSpan.textContent = '';
     } catch (e) {
         if (errorSpan) errorSpan.textContent = 'Ошибка: ' + e.message;
@@ -1427,6 +1434,7 @@ function renderPostImagesPreview() {
 function removePostImage(index) {
     currentPostImages.splice(index, 1);
     renderPostImagesPreview();
+    updateAttachButtons();
 }
 
 // обработка выбора картинки для комментария
@@ -1447,6 +1455,7 @@ async function handleCommentImageUpload(event) {
                 </div>
             `;
         }
+	updateAttachButtons();
     } catch (e) {
         showMessage('Ошибка загрузки: ' + e.message);
     }
@@ -1457,6 +1466,7 @@ function removeCommentImage() {
     currentCommentImage = null;
     const container = document.getElementById('commentImagePreview');
     if (container) container.innerHTML = '';
+    updateAttachButtons();
 }
 
 async function loadAdminUsers() {
@@ -1707,13 +1717,14 @@ function openCreatePostModal() {
         return;
     }
     
-    renderSubforumSelect(); // Обновляем список подфорумов
-    renderPostTagSelect();  // Обновляем список тегов
+    renderSubforumSelect();
+    renderPostTagSelect();
     
     document.getElementById('postTitle').value = '';
     document.getElementById('postContent').value = '';
     currentPostImages = [];
-    renderPostImagesPreview(); // Очищаем превью картинок
+    renderPostImagesPreview();
+    updateAttachButtons();
     
     document.getElementById('createPostModal').classList.add('open');
 }
@@ -1934,4 +1945,29 @@ async function moderateItem(type, id, action, containerId, btn) {
         showMessage('Ошибка: ' + e.message);
     }
 });
+}
+
+function updateAttachButtons() {
+    const postBtn = document.getElementById('postAttachBtn');
+    if (postBtn) {
+        postBtn.style.display = currentPostImages.length >= 4 ? 'none' : 'inline-block';
+    }
+
+    const commentBtn = document.getElementById('commentAttachBtn');
+    if (commentBtn) {
+        commentBtn.style.display = currentCommentImage ? 'none' : 'inline-block';
+    }
+
+    const editPostBtn = document.getElementById('editPostAttachBtn');
+    if (editPostBtn) {
+        editPostBtn.style.display = currentPostImages.length >= 4 ? 'none' : 'inline-block';
+    }
+}
+
+function removeEditCommentImage(commentId) {
+    currentCommentImage = null;
+    document.getElementById('editCommentImagePreview-' + commentId).innerHTML = '';
+    
+    const btn = document.getElementById('editCommentAttachBtn-' + commentId);
+    if (btn) btn.style.display = 'inline-block';
 }
