@@ -97,7 +97,8 @@ function subforumName(id) {
     return s ? s.name : ('Подфорум ' + id);
 }
 
-async function createSubforum() {
+async function createSubforum(btn) {
+   return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
     if (!isGlobalAdmin()) { showMessage('Только администратор может создавать подфорумы'); return; }
@@ -139,6 +140,7 @@ async function createSubforum() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 function askDeleteSubforum(id, name) {
@@ -305,7 +307,8 @@ function renderVoteControls(type, id, score) {
     </span>`;
 }
 
-async function votePost(postId, value) {
+async function votePost(postId, value, btn) {
+  return withBtnLock(btn, async () => {
     const ok = await voteOnTarget('post', postId, value);
     if (!ok) return;
 
@@ -316,9 +319,11 @@ async function votePost(postId, value) {
     if (currentPost && currentPost.postId === postId) currentPost.rating = newScore;
 
     updateVoteUI('post', postId, newScore);
+});
 }
 
-async function voteComment(commentId, value) {
+async function voteComment(commentId, value, btn) {
+  return withBtnLock(btn, async () => {
     const ok = await voteOnTarget('comment', commentId, value);
     if (!ok) return;
 
@@ -328,6 +333,7 @@ async function voteComment(commentId, value) {
     if (c) c.rating = newScore;
 
     updateVoteUI('comment', commentId, newScore);
+});
 }
 
 async function voteOnTarget(type, id, value) {
@@ -486,7 +492,8 @@ function changePostsPage(delta) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function createPost() {
+async function createPost(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -537,6 +544,7 @@ async function createPost() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 async function showPostDetail(postId) {
@@ -621,11 +629,11 @@ async function showPostDetail(postId) {
             if (canMod) {
                 html += `<button class="pin-toggle${p.isPinned ? ' active' : ''}"
                                  title="${p.isPinned ? 'Открепить' : 'Закрепить'}"
-                                 onclick="togglePostPinned()">📌</button>`;
+                                 onclick="togglePostPinned(this)">📌</button>`;
 
                 html += `<button class="close-toggle${p.isClosed ? ' active' : ''}"
                                  title="${p.isClosed ? 'Открыть пост' : 'Закрыть пост'}"
-                                 onclick="togglePostClosed()">${p.isClosed ? '🔒' : '🔓'}</button>`;
+                                 onclick="togglePostClosed(this)">${p.isClosed ? '🔒' : '🔓'}</button>`;
             }
 
             if (canMod && Object.keys(tagsCache).length > 0) {
@@ -637,12 +645,12 @@ async function showPostDetail(postId) {
                     <select id="tagSelect">
                         ${options}
                     </select>
-                    <button onclick="savePostTag()">Сохранить тег</button>
+                    <button onclick="savePostTag(this)">Сохранить тег</button>
                 `;
             }
 
             if (canDeletePost) {
-                html += `<button class="danger" onclick="deleteCurrentPost()">Удалить пост</button>`;
+                html += `<button class="danger" onclick="deleteCurrentPost(this)">Удалить пост</button>`;
             }
 
             html += `</div></div>`;
@@ -685,7 +693,7 @@ function startEditPost() {
         </div>
 
         <div class="form-actions">
-            <button class="success" onclick="saveEditedPost()">Сохранить</button>
+            <button class="success" onclick="saveEditedPost(this)">Сохранить</button>
             <button class="logout" onclick="showPostDetail(${currentPostId})">Отмена</button>
         </div>
     `;
@@ -740,52 +748,55 @@ function removeEditPostImage(index) {
     renderEditPostImagesPreview();
 }
 
-async function saveEditedPost() {
-    const token = getToken();
-    if (!token) { showMessage('Сначала войдите'); return; }
+async function saveEditedPost(btn) {
+    return withBtnLock(btn, async () => {
+        const token = getToken();
+        if (!token) { showMessage('Сначала войдите'); return; }
 
-    const title = document.getElementById('editPostTitle').value.trim();
-    const content = document.getElementById('editPostContent').value.trim();
+        const title = document.getElementById('editPostTitle').value.trim();
+        const content = document.getElementById('editPostContent').value.trim();
 
-    if (!title || !content) {
-        showMessage('Заполните заголовок и текст');
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
-            body: JSON.stringify({ ...currentPost, title, content,
-		images: currentPostImages.map(url => ({ imageUrl: url }))  })
-        });
-
-        if (!res.ok) {
-            let errText = '';
-            try {
-                const ct = res.headers.get('content-type') || '';
-                if (ct.includes('application/json')) {
-                    const j = await res.json();
-                    errText = j.title || j.detail || JSON.stringify(j);
-                    if (j.errors) errText += ' ' + JSON.stringify(j.errors);
-                } else {
-                    errText = await res.text();
-                }
-            } catch (_) { }
-            showMessage(`Ошибка ${res.status}: ${errText}`);
+        if (!title || !content) {
+            showMessage('Заполните заголовок и текст');
             return;
         }
 
-        await showPostDetail(currentPostId);
-    } catch (e) {
-        showMessage('Ошибка: ' + e.message);
-    }
+        try {
+            const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ ...currentPost, title, content,
+                    images: currentPostImages.map(url => ({ imageUrl: url })) })
+            });
+
+            if (!res.ok) {
+                let errText = '';
+                try {
+                    const ct = res.headers.get('content-type') || '';
+                    if (ct.includes('application/json')) {
+                        const j = await res.json();
+                        errText = j.title || j.detail || JSON.stringify(j);
+                        if (j.errors) errText += ' ' + JSON.stringify(j.errors);
+                    } else {
+                        errText = await res.text();
+                    }
+                } catch (_) { }
+                showMessage(`Ошибка ${res.status}: ${errText}`);
+                return;
+            }
+
+            await showPostDetail(currentPostId);
+        } catch (e) {
+            showMessage('Ошибка: ' + e.message);
+        }
+    });
 }
 
-async function savePostTag() {
+async function savePostTag(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -817,9 +828,11 @@ async function savePostTag() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
-async function deleteCurrentPost() {
+async function deleteCurrentPost(btn) {
+  return withBtnLock(btn, async () => {
     if (!confirm('Удалить этот пост?')) return;
 
     const token = getToken();
@@ -840,6 +853,7 @@ async function deleteCurrentPost() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 // генерация HTML одного комментария
@@ -868,7 +882,7 @@ function createCommentElement(node, isReply = false) {
     const pinBtn = (isPostAuthorUser && !isReply)
         ? `<button class="pin-btn${node.isPinned ? ' active' : ''}"
                  title="${node.isPinned ? 'Открепить' : 'Закрепить'}"
-                 onclick="toggleCommentPinned(${node.commentId})">📌</button>`
+                 onclick="toggleCommentPinned(${node.commentId}, this)">📌</button>`
         : '';
 
     const replyBtn = `<button class="comment-del-btn reply-btn" onclick="startReply(${node.commentId})">Ответить</button>`;
@@ -876,7 +890,7 @@ function createCommentElement(node, isReply = false) {
         ? `<button class="logout comment-del-btn" onclick="startEditComment(${node.commentId})">Изменить</button>`
         : '';
     const delBtn = canDelete
-        ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId})">Удалить</button>`
+        ? `<button class="danger comment-del-btn" onclick="deleteCommentById(${node.commentId}, this)">Удалить</button>`
         : '';
     const commentImageHtml = node.imageUrl 
     ? `<img src="${node.imageUrl}" class="comment-image">` 
@@ -898,7 +912,7 @@ function createCommentElement(node, isReply = false) {
         <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
             <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
             <div class="form-actions">
-                <button class="success" onclick="submitReply(${node.commentId})">Отправить</button>
+                <button class="success" onclick="submitReply(${node.commentId}, this)">Отправить</button>
                 <button class="logout" onclick="cancelReply(${node.commentId})">Отмена</button>
             </div>
         </div>
@@ -1021,7 +1035,8 @@ function cancelReply(commentId) {
     if (form) form.style.display = 'none';
 }
 
-async function submitReply(parentCommentId) {
+async function submitReply(parentCommentId, btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -1072,6 +1087,7 @@ async function submitReply(parentCommentId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 function startEditComment(commentId) {
@@ -1103,7 +1119,7 @@ function startEditComment(commentId) {
         </div>
 
         <div class="form-actions">
-            <button class="success" onclick="saveEditedComment(${commentId})">Сохранить</button>
+            <button class="success" onclick="saveEditedComment(${commentId}, this)">Сохранить</button>
             <button class="logout" onclick="loadComments(${currentPostId}, ${currentCommentsCanModerate})">Отмена</button>
         </div>
     `;
@@ -1129,7 +1145,8 @@ async function handleEditCommentImageUpload(event, commentId) {
     event.target.value = '';
 }
 
-async function saveEditedComment(commentId) {
+async function saveEditedComment(commentId, btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -1163,9 +1180,11 @@ async function saveEditedComment(commentId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
-async function deleteCommentById(id) {
+async function deleteCommentById(id, btn) {
+  return withBtnLock(btn, async () => {
     if (!confirm('Удалить комментарий?')) return;
 
     const token = getToken();
@@ -1186,9 +1205,11 @@ async function deleteCommentById(id) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
-async function submitComment() {
+async function submitComment(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -1243,10 +1264,12 @@ async function submitComment() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+ });
 }
 
 // закрепление / закрытие
-async function togglePostPinned() {
+async function togglePostPinned(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
     if (!currentPost) return;
@@ -1273,9 +1296,11 @@ async function togglePostPinned() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
-async function togglePostClosed() {
+async function togglePostClosed(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
     if (!currentPost) return;
@@ -1302,9 +1327,11 @@ async function togglePostClosed() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
-async function toggleCommentPinned(commentId) {
+async function toggleCommentPinned(commentId, btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -1332,6 +1359,7 @@ async function toggleCommentPinned(commentId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+ });
 }
 
 async function uploadImages(files) {
@@ -1548,7 +1576,8 @@ async function loadAdminSubforums() {
     }
 }
 
-async function createTag() {
+async function createTag(btn) {
+  return withBtnLock(btn, async () => {
     const input = document.getElementById('newTagName');
     const name = input.value.trim();
     if (!name) return showMessage('Введите название тега');
@@ -1576,6 +1605,7 @@ async function createTag() {
     } catch (e) {
         showMessage('Ошибка сети: ' + e.message);
     }
+});
 }
 
 function askDeleteTag(id, name) {
@@ -1837,8 +1867,8 @@ async function loadPendingModeration(containerId) {
                     | Подфорум: ${escapeHtml(subforumName(p.subforumId))}
                 </div>
                 <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
-                    <button class="success" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'approve', '${containerId}')">Одобрить</button>
-                    <button class="danger" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'reject', '${containerId}')">Удалить</button>
+                    <button class="success" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'approve', '${containerId}', this)">Одобрить</button>
+                    <button class="danger" style="${btnStyle}" onclick="moderateItem('posts', ${p.postId}, 'reject', '${containerId}', this)">Удалить</button>
                 </div>
             `;
             list.appendChild(li);
@@ -1871,8 +1901,8 @@ async function loadPendingModeration(containerId) {
                     | <a href="?post=${c.postId}" target="_blank" class="post-title-link">Пост: ${escapeHtml(c.postTitle || 'Пост')}</a>
                 </div>
                 <div style="display: flex; gap: 10px; width: 100%; align-items: stretch;">
-                    <button class="success" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'approve', '${containerId}')">Одобрить</button>
-                    <button class="danger" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'reject', '${containerId}')">Удалить</button>
+                    <button class="success" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'approve', '${containerId}', this)">Одобрить</button>
+                    <button class="danger" style="${btnStyle}" onclick="moderateItem('comments', ${c.commentId}, 'reject', '${containerId}', this)">Удалить</button>
                 </div>
             `;
             list.appendChild(li);
@@ -1883,7 +1913,8 @@ async function loadPendingModeration(containerId) {
     }
 }
 
-async function moderateItem(type, id, action, containerId) {
+async function moderateItem(type, id, action, containerId, btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     const url = `${API_URL}/api/moderation/${type}/${id}/${action}`;
 
@@ -1902,4 +1933,5 @@ async function moderateItem(type, id, action, containerId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }

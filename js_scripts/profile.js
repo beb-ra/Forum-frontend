@@ -1,4 +1,3 @@
-// ---- показ профиля ----
 async function showProfilePage(profileId) {
     showProfileSection();
 
@@ -112,7 +111,7 @@ async function showProfilePage(profileId) {
                     <div class="ban-dates">
                         Забанен: ${escapeHtml(formatDate(b.bannedDate))} · До: ${escapeHtml(expires)}
                     </div>
-                    <button class="success" onclick="unbanUser(${b.banId})">Снять бан</button>
+                    <button class="success" onclick="unbanUser(${b.banId}, this)">Снять бан</button>
                 </div>`;
             });
             html += `</div>`;
@@ -345,7 +344,8 @@ document.querySelectorAll('input[name="roleOption"]').forEach(r => {
     });
 });
 
-async function saveUserRoles() {
+async function saveUserRoles(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
     if (!isGlobalAdmin()) { showMessage('Только администратор может менять полномочия'); return; }
@@ -441,6 +441,7 @@ async function saveUserRoles() {
 
     closeRolesModal();
     showMessage('Полномочия обновлены', false);
+  });
 }
 
 // баны
@@ -556,7 +557,8 @@ async function deleteUserContent(userId) {
     return { postsFailed, commentsFailed };
 }
 
-async function saveBan() {
+async function saveBan(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
     if (currentBanProfileId == null) return;
@@ -668,6 +670,7 @@ async function saveBan() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 async function loadUserBans(profileId) {
@@ -685,7 +688,8 @@ async function loadUserBans(profileId) {
     }
 }
 
-async function unbanUser(banId) {
+async function unbanUser(banId, btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) { showMessage('Сначала войдите'); return; }
 
@@ -707,6 +711,7 @@ async function unbanUser(banId) {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 // смена почты
@@ -721,7 +726,8 @@ function closeEmailModal() {
     document.getElementById('emailModal').classList.remove('open');
 }
 
-async function saveEmail() {
+async function saveEmail(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) return;
 
@@ -766,6 +772,7 @@ async function saveEmail() {
     } catch (e) {
         showMessage('Ошибка: ' + e.message);
     }
+});
 }
 
 // смена пароля
@@ -780,7 +787,8 @@ function closePasswordModal() {
     document.getElementById('passwordModal').classList.remove('open');
 }
 
-async function savePassword() {
+async function savePassword(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) return;
 
@@ -812,6 +820,7 @@ async function savePassword() {
     } catch (e) {
         showMessage('Ошибка сети: ' + e.message);
     }
+});
 }
 
 function getAvatarUrl(user) {
@@ -850,7 +859,8 @@ async function handleAvatarUpload(event) {
     event.target.value = '';
 }
 
-async function saveProfileChanges() {
+async function saveProfileChanges(btn) {
+  return withBtnLock(btn, async () => {
     const token = getToken();
     if (!token) return;
 
@@ -877,4 +887,5 @@ async function saveProfileChanges() {
     } catch (e) {
         showMessage('Ошибка сети: ' + e.message);
     }
+ });
 }

@@ -70,6 +70,19 @@ const API_URL = 'https://forum-6sgl.onrender.com';
             return s.length > max ? s.slice(0, max) + '…' : s;
         }
 
+async function withBtnLock(button, func) {
+    if (!button) return await func();
+    if (button.disabled || button.dataset.busy === '1') return;
+    button.dataset.busy = '1';
+    button.disabled = true;
+    try {
+        return await func();
+    } finally {
+        delete button.dataset.busy;
+        button.disabled = false;
+    }
+}
+
         // JWT и роли
         function parseJwt(token) {
             try {
@@ -210,6 +223,9 @@ const API_URL = 'https://forum-6sgl.onrender.com';
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMessage').textContent = message;
             document.getElementById('confirmYesBtn').textContent = yesText;
+	    const yesBtn = document.getElementById('confirmYesBtn');
+    	    yesBtn.disabled = false;
+    	    delete yesBtn.dataset.busy;
             pendingConfirmAction = onConfirm;
             document.getElementById('confirmModal').classList.add('open');
         }

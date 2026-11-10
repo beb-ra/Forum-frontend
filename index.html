@@ -34,7 +34,7 @@
         <h2>Вход</h2>
         <input id="loginEmail" type="email" placeholder="Email">
         <input id="loginPassword" type="password" placeholder="Пароль">
-        <button onclick="login()">Войти</button>
+        <button onclick="login(this)">Войти</button>
         <button class="logout" onclick="showRegister()">Регистрация</button>
     </div>
 
@@ -44,7 +44,7 @@
         <input id="regUsername" type="text" placeholder="Username">
         <input id="regEmail" type="email" placeholder="Email">
         <input id="regPassword" type="password" placeholder="Пароль">
-        <button onclick="register()">Зарегистрироваться</button>
+        <button onclick="register(this)">Зарегистрироваться</button>
         <button class="logout" onclick="showLogin()">Назад к входу</button>
     </div>
 
@@ -96,7 +96,7 @@
     		<div class="action-row">
         		<button type="button" class="attach-btn" onclick="document.getElementById('commentImageInput').click()">📎			</button>
         		<input type="file" id="commentImageInput" accept="image/*" style="display: none;" onchange="handleCommentImageUpload(event)">
-        		<button onclick="submitComment()">Отправить</button>
+        		<button onclick="submitComment(this)">Отправить</button>
     		</div>
 	</div>
         <div id="commentsList"></div>
@@ -142,7 +142,7 @@
             <h2 id="confirmTitle">Подтверждение</h2>
             <p id="confirmMessage"></p>
             <div class="modal-actions">
-                <button id="confirmYesBtn" class="danger" onclick="confirmYes()">Удалить</button>
+                <button id="confirmYesBtn" class="danger" onclick="confirmYes(this)">Удалить</button>
                 <button class="logout" onclick="closeConfirmModal()">Отмена</button>
             </div>
         </div>
@@ -177,7 +177,7 @@
             </div>
 
             <div class="modal-actions">
-                <button class="success" onclick="saveUserRoles()">Сохранить</button>
+                <button class="success" onclick="saveUserRoles(this)">Сохранить</button>
                 <button class="logout" onclick="closeRolesModal()">Отмена</button>
             </div>
         </div>
@@ -230,7 +230,7 @@
             </label>
 
             <div class="modal-actions">
-                <button class="danger" onclick="saveBan()">Забанить</button>
+                <button class="danger" onclick="saveBan(this)">Забанить</button>
                 <button class="logout" onclick="closeBanModal()">Отмена</button>
             </div>
         </div>
@@ -248,7 +248,7 @@
             <input id="emailPasswordInput" type="password" placeholder="Введите пароль">
 
             <div class="modal-actions">
-                <button class="success" onclick="saveEmail()">Сохранить</button>
+                <button class="success" onclick="saveEmail(this)">Сохранить</button>
                 <button class="logout" onclick="closeEmailModal()">Отмена</button>
             </div>
         </div>
@@ -266,7 +266,7 @@
             <input id="newPasswordInput" type="password" placeholder="Введите новый пароль">
 
             <div class="modal-actions">
-                <button class="success" onclick="savePassword()">Сохранить</button>
+                <button class="success" onclick="savePassword(this)">Сохранить</button>
                 <button class="logout" onclick="closePasswordModal()">Отмена</button>
             </div>
         </div>
@@ -296,7 +296,7 @@
         <div id="adminTabTags" class="admin-tab-content" style="display: none;">
             <div class="action-row" style="margin-bottom: 15px;">
                 <input id="newTagName" type="text" placeholder="Название нового тега">
-                <button class="success" onclick="createTag()">Создать</button>
+                <button class="success" onclick="createTag(this)">Создать</button>
             </div>
             <ul id="adminTagsList" class="admin-list">
                 <li style="color:#888; font-style:italic;">Загрузка...</li>
@@ -307,7 +307,7 @@
         <div id="adminTabSubforums" class="admin-tab-content" style="display: none;">
             <div class="action-row" style="margin-bottom: 15px;">
                 <input id="newSubforumName" type="text" placeholder="Название нового подфорума">
-                <button class="success" onclick="createSubforum()">Создать</button>
+                <button class="success" onclick="createSubforum(this)">Создать</button>
             </div>
             <ul id="adminSubforumsList" class="admin-list">
                 <li style="color:#888; font-style:italic;">Загрузка...</li>
@@ -342,7 +342,7 @@
         <textarea id="editDescriptionInput" rows="4" placeholder="Расскажите о себе..."></textarea>
 
         <div class="modal-actions">
-            <button class="success" onclick="saveProfileChanges()">Сохранить</button>
+            <button class="success" onclick="saveProfileChanges(this)">Сохранить</button>
             <button class="logout" onclick="closeProfileEditModal()">Отмена</button>
         </div>
     </div>
@@ -373,7 +373,7 @@
         </div>
 
         <div class="modal-actions">
-            <button class="success" onclick="createPost()">Опубликовать</button>
+            <button class="success" onclick="createPost(this)">Опубликовать</button>
             <button class="logout" onclick="closeCreatePostModal()">Отмена</button>
         </div>
     </div>

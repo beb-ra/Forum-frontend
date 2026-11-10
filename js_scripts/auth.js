@@ -1,4 +1,5 @@
-	async function login() {
+	async function login(btn) {
+	  return withBtnLock(btn, async () => {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
@@ -23,9 +24,11 @@
             } catch (e) {
                 showMessage('Ошибка: ' + e.message);
             }
-        }
+        });
+}
 
-        async function register() {
+        async function register(btn) {
+	  return withBtnLock(btn, async () => {
             const username = document.getElementById('regUsername').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
@@ -63,7 +66,8 @@
             } catch (e) {
                 showMessage('Ошибка: ' + e.message);
             }
-        }
+        });
+}
 
         function logout() {
             clearToken();
