@@ -29,6 +29,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
 	let currentSearchQuery = '';
 	let tempAvatarUrl = null;
 	let currentTagId = null;
+	let loadingTimeout;
 
         // утилиты
         function showMessage(text, isError = true) {
@@ -255,6 +256,16 @@ function closeAdminToolsModal() {
 
 	function hideAllSections() {
     ['loginSection', 'registerSection', 'appSection',
-     'postDetailSection', 'profileSection', 'loadingSection']
+     'postDetailSection', 'profileSection']
         .forEach(id => document.getElementById(id).className = 'section hidden');
-	}
+
+	const loading = document.getElementById('loadingSection');
+    if (loading && !loading.classList.contains('hidden')) {
+        loading.style.opacity = '0';
+        clearTimeout(loadingTimeout);
+        loadingTimeout = setTimeout(() => {
+            loading.className = 'section hidden';
+            loading.style.opacity = '';
+        }, 400);
+    }
+}

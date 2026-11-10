@@ -915,6 +915,11 @@ button.pin-btn.active {
 #confirmModal {
     z-index: 2000;
 }
+
+#loadingSection {
+    transition: opacity 0.4s ease;
+}
+
         @media (max-width: 600px) {
             .layout { flex-direction: column; }
             .sidebar { width: 100%; }
