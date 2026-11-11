@@ -714,29 +714,55 @@ async function loadUserBans(profileId) {
     }
 }
 
-async function unbanUser(banId, btn) {
-  return withBtnLock(btn, async () => {
-    const token = getToken();
-    if (!token) { showMessage('Сначала войдите'); return; }
+function askUnbanUser(banId, btn) {
+    showConfirm(
+        'Вы действительно хотите снять бан?',
+        () => {
+            executeUnban(banId, btn, async () => {
+                const params = new URLSearchParams(window.location.search);
+                const pid = parseInt(params.get('profile'), 10);
+                if (!isNaN(pid)) await showProfilePage(pid);
+            });
+        },
+        'Снятие бана',
+        'Снять'
+    );
+}
 
-    try {
-        const res = await fetch(`${API_URL}/api/bans/${banId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+function askUnbanUserFromModal(banId, btn, containerId) {
+    showConfirm(
+        'Вы действительно хотите снять бан?',
+        () => {
+            executeUnban(banId, btn, () => {
+                loadBansList(containerId);
+            });
+        },
+        'Снятие бана',
+        'Снять'
+    );
+}
 
-        if (!res.ok) {
-            showMessage('Ошибка снятия бана: ' + res.status);
-            return;
+async function executeUnban(banId, btn, onSuccess) {
+    return withBtnLock(btn, async () => {
+        const token = getToken();
+        if (!token) { showMessage('Сначала войдите'); return; }
+
+        try {
+            const res = await fetch(`${API_URL}/api/bans/${banId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (!res.ok) {
+                showMessage('Ошибка снятия бана: ' + res.status);
+                return;
+            }
+
+            if (onSuccess) await onSuccess();
+        } catch (e) {
+            showMessage('Ошибка: ' + e.message);
         }
-
-        const params = new URLSearchParams(window.location.search);
-        const pid = parseInt(params.get('profile'), 10);
-        if (!isNaN(pid)) await showProfilePage(pid);
-    } catch (e) {
-        showMessage('Ошибка: ' + e.message);
-    }
-});
+    });
 }
 
 // смена почты
@@ -944,13 +970,4 @@ async function saveProfileChanges(btn) {
         showMessage('Ошибка сети: ' + e.message);
     }
  });
-}
-
-function askUnbanUser(banId) {
-    showConfirm(
-        'Вы действительно хотите снять бан?',
-        () => unbanUser(banId, document.getElementById('confirmYesBtn')),
-        'Снятие бана',
-        'Снять'
-    );
 }

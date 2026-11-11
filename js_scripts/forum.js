@@ -2029,7 +2029,7 @@ async function loadBansList(containerId) {
                     <strong>Причина:</strong> ${escapeHtml(b.banReason || '—')}<br>
                     <strong>Действует до:</strong> ${escapeHtml(expires)}
                 </div>
-                <button class="success" style="margin: 0; padding: 6px 15px; font-size: 13px;" onclick="unbanUser(${b.banId}, this)">Разбанить</button>
+                <button class="success" style="margin: 0; padding: 6px 15px; font-size: 13px;" onclick="askUnbanUserFromModal(${b.banId}, this, '${containerId}')">Разбанить</button>
             `;
             list.appendChild(li);
         });
