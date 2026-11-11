@@ -92,7 +92,8 @@ async function showProfilePage(profileId) {
         } catch (_) { }
 
         const userBans = await loadUserBans(profileId);
-if (isGlobalAdmin() && userBans.length > 0) {
+
+if (userBans.length > 0) {
     const now = new Date();
     
     const activeBans = userBans.filter(b => !b.expiresDate || new Date(b.expiresDate) > now);
@@ -701,7 +702,7 @@ async function saveBan(btn) {
 
 async function loadUserBans(profileId) {
     const token = getToken();
-    if (!token || !isGlobalAdmin()) return [];
+    if (!token) return [];
     try {
         const res = await fetch(`${API_URL}/api/bans`, {
             headers: { 'Authorization': 'Bearer ' + token }
