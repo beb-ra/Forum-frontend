@@ -91,31 +91,59 @@ async function showProfilePage(profileId) {
             }
         } catch (_) { }
 
-        // Блок «Активные баны» (для админа)
         const userBans = await loadUserBans(profileId);
-        if (isGlobalAdmin() && userBans.length > 0) {
-            html += `<div class="profile-subsection">
-                <h3>Активные баны</h3>`;
-            userBans.forEach(b => {
-                const subName = b.subforumId == null
-                    ? 'Весь форум'
-                    : (subforumName(b.subforumId) || ('Подфорум ' + b.subforumId));
-                const expires = b.expiresDate
-                    ? formatDate(b.expiresDate)
-                    : 'бессрочно';
-                html += `<div class="ban-item">
-                    <div class="ban-info">
-                        <strong>Область:</strong> ${escapeHtml(subName)}
-                    </div>
-                    <div class="ban-reason">Причина: ${escapeHtml(b.banReason || '—')}</div>
-                    <div class="ban-dates">
-                        Забанен: ${escapeHtml(formatDate(b.bannedDate))} · До: ${escapeHtml(expires)}
-                    </div>
-                    <button class="success" onclick="unbanUser(${b.banId}, this)">Снять бан</button>
-                </div>`;
-            });
-            html += `</div>`;
-        }
+if (isGlobalAdmin() && userBans.length > 0) {
+    const now = new Date();
+    
+    const activeBans = userBans.filter(b => !b.expiresDate || new Date(b.expiresDate) > now);
+    const expiredBans = userBans.filter(b => b.expiresDate && new Date(b.expiresDate) <= now);
+
+    // Вывод активных банов
+    if (activeBans.length > 0) {
+        html += `<div class="profile-subsection">
+            <h3>Активные баны</h3>`;
+        activeBans.forEach(b => {
+            const subName = b.subforumId == null
+                ? 'Весь форум'
+                : (subforumName(b.subforumId) || ('Подфорум ' + b.subforumId));
+            const expires = b.expiresDate
+                ? formatDate(b.expiresDate)
+                : 'бессрочно';
+            html += `<div class="ban-item">
+                <div class="ban-info">
+                    <strong>Область:</strong> ${escapeHtml(subName)}
+                </div>
+                <div class="ban-reason">Причина: ${escapeHtml(b.banReason || '—')}</div>
+                <div class="ban-dates">
+                    Забанен: ${escapeHtml(formatDate(b.bannedDate))} · До: ${escapeHtml(expires)}
+                </div>
+                <button class="success" onclick="askUnbanUser(${b.banId})">Снять бан</button>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // Вывод истекших банов
+    if (expiredBans.length > 0) {
+        html += `<div class="profile-subsection">
+            <h3>История банов</h3>`;
+        expiredBans.forEach(b => {
+            const subName = b.subforumId == null
+                ? 'Весь форум'
+                : (subforumName(b.subforumId) || ('Подфорум ' + b.subforumId));
+            html += `<div class="ban-item" style="opacity: 0.6; border-left-color: #6c757d;">
+                <div class="ban-info">
+                    <strong>Область:</strong> ${escapeHtml(subName)}
+                </div>
+                <div class="ban-reason">Причина: ${escapeHtml(b.banReason || '—')}</div>
+                <div class="ban-dates">
+                    Забанен: ${escapeHtml(formatDate(b.bannedDate))} · Истек: ${escapeHtml(formatDate(b.expiresDate))}
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+}
 
         html += `<div class="profile-subsection">
             <h3>Недавние посты</h3>`;
@@ -186,7 +214,7 @@ async function showProfilePage(profileId) {
     }
 }
 
-// ---- удаление своего аккаунта ----
+// удаление своего аккаунта
 function askDeleteOwnAccount() {
     const uid = getCurrentUserId();
     if (uid == null) { showMessage('Вы не авторизованы'); return; }
@@ -390,7 +418,6 @@ async function saveUserRoles(btn) {
 
     if (roleValue === 'user') {
         closeRolesModal();
-        showMessage('Полномочия обновлены', false);
         return;
     }
 
@@ -440,7 +467,6 @@ async function saveUserRoles(btn) {
     }
 
     closeRolesModal();
-    showMessage('Полномочия обновлены', false);
   });
 }
 
@@ -704,7 +730,6 @@ async function unbanUser(banId, btn) {
             return;
         }
 
-        showMessage('Бан снят', false);
         const params = new URLSearchParams(window.location.search);
         const pid = parseInt(params.get('profile'), 10);
         if (!isNaN(pid)) await showProfilePage(pid);
@@ -757,7 +782,6 @@ async function saveEmail(btn) {
 
         if (res.ok) {
             closeEmailModal();
-            showMessage('Email успешно изменён!', false);
             const currentId = getCurrentUserId();
             await showProfilePage(currentId);
         } else if (res.status === 409) {
@@ -812,7 +836,6 @@ async function savePassword(btn) {
 
         if (res.ok) {
             closePasswordModal();
-            showMessage('Пароль успешно изменён!', false);
         } else {
             const text = await res.text();
             showMessage(`Ошибка: ${text || res.status}`);
@@ -921,4 +944,13 @@ async function saveProfileChanges(btn) {
         showMessage('Ошибка сети: ' + e.message);
     }
  });
+}
+
+function askUnbanUser(banId) {
+    showConfirm(
+        'Вы действительно хотите снять бан?',
+        () => unbanUser(banId, document.getElementById('confirmYesBtn')),
+        'Снятие бана',
+        'Снять'
+    );
 }
