@@ -836,6 +836,8 @@ function getAvatarUrl(user) {
 
 function openProfileEditModal(user) {
     tempAvatarUrl = user.imageUrl || null;
+
+    document.getElementById('editUsernameInput').value = user.username || '';
     document.getElementById('editAvatarPreview').src = getAvatarUrl(user);
     document.getElementById('editDescriptionInput').value = user.description || '';
     document.getElementById('profileEditModal').classList.add('open');
@@ -864,9 +866,40 @@ async function saveProfileChanges(btn) {
     const token = getToken();
     if (!token) return;
 
+    const newUsername = document.getElementById('editUsernameInput').value.trim();
+    const currentUsername = localStorage.getItem('username');
     const description = document.getElementById('editDescriptionInput').value.trim();
 
+    if (!newUsername) {
+        showMessage('Имя пользователя не может быть пустым');
+        return;
+    }
+
+    if (newUsername.length > 15) {
+        showMessage('Новое имя слишком длинное');
+        return;
+    }
+
     try {
+	if (newUsername !== currentUsername) {
+                const nameRes = await fetch(`${API_URL}/api/users/me/name`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ newName: newUsername })
+                });
+
+                if (!nameRes.ok) {
+                    showMessage('Ошибка изменения имени: ' + nameRes.status);
+                    return;
+                }
+
+                localStorage.setItem('username', newUsername);
+                document.getElementById('currentUser').textContent = newUsername;
+            }
+
         const res = await fetch(`${API_URL}/api/users/me/profile`, {
             method: 'PUT',
             headers: {

@@ -1525,6 +1525,10 @@ function switchAdminTab(tab) {
         document.querySelector('.admin-tabs button:nth-child(4)').classList.add('active');
         document.getElementById('adminTabModeration').style.display = 'block';
         loadPendingModeration('adminPendingList');
+    } else if (tab === 'bans') {
+        document.querySelector('.admin-tabs button:nth-child(5)').classList.add('active');
+        document.getElementById('adminTabBans').style.display = 'block';
+        loadBansList('adminBansList');
     }
 }
 
@@ -1767,7 +1771,7 @@ function goToTag(e, tagId) {
 
 function openModeratorToolsModal() {
     document.getElementById('moderatorToolsModal').classList.add('open');
-    switchModTab('users');
+    switchModTab('pending');
 }
 
 function closeModeratorToolsModal() {
@@ -1779,13 +1783,17 @@ function switchModTab(tab) {
     document.querySelectorAll('#moderatorToolsModal .admin-tab-content').forEach(content => content.style.display = 'none');
 
     if (tab === 'users') {
-        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(1)').classList.add('active');
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(2)').classList.add('active');
         document.getElementById('modTabUsers').style.display = 'block';
         loadModeratorUsers();
     } else if (tab === 'pending') {
-        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(2)').classList.add('active');
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(1)').classList.add('active');
         document.getElementById('modTabPending').style.display = 'block';
         loadPendingModeration('modPendingList');
+    } else if (tab === 'bans') {
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(3)').classList.add('active');
+        document.getElementById('modTabBans').style.display = 'block';
+        loadBansList('modBansList');
     }
 }
 
@@ -1971,4 +1979,61 @@ function removeEditCommentImage(commentId) {
     
     const btn = document.getElementById('editCommentAttachBtn-' + commentId);
     if (btn) btn.style.display = 'inline-block';
+}
+
+async function loadBansList(containerId) {
+    const list = document.getElementById(containerId);
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/api/bans`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (!res.ok) {
+            list.innerHTML = '<li style="color:#dc3545;">У вас нет прав на просмотр банов.</li>';
+            return;
+        }
+
+        const bans = await res.json();
+        if (bans.length === 0) {
+            list.innerHTML = '<li>Активных банов нет.</li>';
+            return;
+        }
+
+        const userIds = [...new Set(bans.map(b => b.userId))];
+        await ensureUsernamesLoaded(userIds);
+
+        list.innerHTML = '';
+        bans.forEach(b => {
+            const li = document.createElement('li');
+            li.style.flexDirection = 'column';
+            li.style.alignItems = 'flex-start';
+            li.style.padding = '15px';
+            li.style.background = '#fff';
+            li.style.marginBottom = '10px';
+            li.style.borderRadius = '6px';
+            li.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+            const userName = usersCache[b.userId] || ('ID ' + b.userId);
+            const subName = b.subforumId ? subforumName(b.subforumId) : 'Весь форум';
+            const expires = b.expiresDate ? formatDate(b.expiresDate) : 'бессрочно';
+
+            li.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px; color: #dc3545; font-size: 15px;">
+                    Забанен: ${escapeHtml(userName)}
+                </div>
+                <div style="font-size: 13px; color: #444; margin-bottom: 10px; line-height: 1.5;">
+                    <strong>Где:</strong> ${escapeHtml(subName)}<br>
+                    <strong>Причина:</strong> ${escapeHtml(b.banReason || '—')}<br>
+                    <strong>Действует до:</strong> ${escapeHtml(expires)}
+                </div>
+                <button class="success" style="margin: 0; padding: 6px 15px; font-size: 13px;" onclick="unbanUser(${b.banId}, this)">Разбанить</button>
+            `;
+            list.appendChild(li);
+        });
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
 }

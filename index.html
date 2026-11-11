@@ -283,6 +283,7 @@
             <button class="admin-tab" onclick="switchAdminTab('tags')">Теги</button>
 	    <button class="admin-tab" onclick="switchAdminTab('subforums')">Подфорумы</button>
 	    <button class="admin-tab" onclick="switchAdminTab('moderation')">На модерации</button>
+	    <button class="admin-tab" onclick="switchAdminTab('bans')">Баны</button>
         </div>
 
         <!-- Содержимое вкладки пользователи -->
@@ -320,6 +321,13 @@
     		</ul>
 	</div>
 
+	<!-- Вкладка баны -->
+	<div id="adminTabBans" class="admin-tab-content" style="display: none;">
+            <ul id="adminBansList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
         <div class="modal-actions">
             <button class="logout" onclick="closeAdminToolsModal()">Закрыть</button>
         </div>
@@ -330,7 +338,8 @@
 <div id="profileEditModal" class="modal-overlay" onclick="if(event.target===this) closeProfileEditModal()">
     <div class="modal">
         <h2>Редактировать профиль</h2>
-        
+        <label for="editUsernameInput">Имя пользователя:</label>
+        <input id="editUsernameInput" type="text" placeholder="Введите ваш ник" style="margin-bottom: 10px;">
         <label>Аватарка:</label>
         <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 10px;">
             <img id="editAvatarPreview" src="" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc;">
@@ -385,8 +394,9 @@
         <h2>Инструменты модератора</h2>
         
         <div class="admin-tabs">
-            <button class="admin-tab active" onclick="switchModTab('users')">Пользователи</button>
-            <button class="admin-tab" onclick="switchModTab('pending')">На модерации</button>
+            <button class="admin-tab active" onclick="switchModTab('pending')">На модерации</button>
+            <button class="admin-tab" onclick="switchModTab('users')">Пользователи</button>
+	    <button class="admin-tab" onclick="switchModTab('bans')">Баны</button>
         </div>
 
         <div id="modTabUsers" class="admin-tab-content">
@@ -397,6 +407,13 @@
 
         <div id="modTabPending" class="admin-tab-content" style="display: none;">
             <ul id="modPendingList" class="admin-list">
+                <li style="color:#888; font-style:italic;">Загрузка...</li>
+            </ul>
+        </div>
+
+	<!-- Вкладка баны -->
+        <div id="modTabBans" class="admin-tab-content" style="display: none;">
+            <ul id="modBansList" class="admin-list">
                 <li style="color:#888; font-style:italic;">Загрузка...</li>
             </ul>
         </div>
