@@ -1673,7 +1673,7 @@ function goToMainPage(e) {
 
     hideAllSections();
     document.getElementById('appSection').className = 'section';
-
+    updateUserInfoHeader();
     renderSubforums();
     loadPosts();
 }
@@ -1693,7 +1693,7 @@ function goToMyPosts(e) {
 
     hideAllSections();
     document.getElementById('appSection').className = 'section';
-
+    updateUserInfoHeader();
     renderSubforums();
     loadPosts();
 }
@@ -2036,4 +2036,22 @@ async function loadBansList(containerId) {
     } catch (e) {
         list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
     }
+}
+
+function updateUserInfoHeader() {
+    const userEl = document.getElementById('currentUser');
+    if (userEl) userEl.textContent = localStorage.getItem('username') || '—';
+    
+    if (typeof renderRoleBadges === 'function') {
+        renderRoleBadges();
+    }
+    
+    const isAdmin = typeof isGlobalAdmin === 'function' && isGlobalAdmin();
+    const isMod = typeof getModeratedSubforumIds === 'function' && getModeratedSubforumIds().length > 0;
+    
+    const modBtn = document.getElementById('moderatorToolsBtn');
+    if (modBtn) modBtn.style.display = isMod ? 'inline-block' : 'none';
+    
+    const adminBtn = document.getElementById('adminToolsBtn');
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
 }
