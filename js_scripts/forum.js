@@ -56,6 +56,7 @@ function makeSubforumItem(name, id) {
         renderSubforums();
         renderSubforumSelect();
         loadPosts();
+        updateBanStatus();
 
 	const params = new URLSearchParams();
         if (isShowingMyPosts) params.set('my-posts', '1');
@@ -1674,6 +1675,7 @@ function goToMainPage(e) {
     hideAllSections();
     document.getElementById('appSection').className = 'section';
     updateUserInfoHeader();
+    updateBanStatus();
     renderSubforums();
     loadPosts();
 }
@@ -1694,6 +1696,7 @@ function goToMyPosts(e) {
     hideAllSections();
     document.getElementById('appSection').className = 'section';
     updateUserInfoHeader();
+    updateBanStatus();
     renderSubforums();
     loadPosts();
 }
@@ -2054,4 +2057,51 @@ function updateUserInfoHeader() {
     
     const adminBtn = document.getElementById('adminToolsBtn');
     if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+}
+
+async function updateBanStatus() {
+    const banSpan = document.getElementById('userBanStatus');
+    if (!banSpan) return;
+
+    const token = getToken();
+    if (!token) {
+        banSpan.textContent = '';
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/bans/me`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+
+        const bans = await res.json();
+        const now = new Date();
+
+        const globalBan = bans.find(b => 
+            b.subforumId === null && (!b.expiresDate || new Date(b.expiresDate) > now)
+        );
+
+        if (globalBan) {
+            const expires = globalBan.expiresDate ? `до ${formatDate(globalBan.expiresDate)}` : 'навсегда';
+            banSpan.textContent = `Бан на всем форуме (${expires}). Причина: ${globalBan.banReason || '—'}`;
+            return;
+        }
+
+        if (currentSubforumId !== null) {
+            const subBan = bans.find(b => 
+                b.subforumId === currentSubforumId && (!b.expiresDate || new Date(b.expiresDate) > now)
+            );
+
+            if (subBan) {
+                const expires = subBan.expiresDate ? `до ${formatDate(subBan.expiresDate)}` : 'навсегда';
+                banSpan.textContent = `Бан в подфоруме «${subforumName(subBan.subforumId)}» (${expires}). Причина: ${subBan.banReason || '—'}`;
+                return;
+            }
+        }
+        banSpan.textContent = '';
+
+    } catch (e) {
+        console.error('Ошибка загрузки', e);
+    }
 }

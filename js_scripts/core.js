@@ -186,6 +186,7 @@ async function withBtnLock(button, func) {
 	    const isMod = getModeratedSubforumIds().length > 0;
 	    document.getElementById('moderatorToolsBtn').style.display = (isMod && !isGlobalAdmin()) ? 'inline-flex' : 'none';
 
+	    await updateBanStatus();
             await ensureTagsLoaded();
             await loadSubforums();
             await loadVotes();
