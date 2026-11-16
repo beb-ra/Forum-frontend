@@ -918,21 +918,19 @@ button.pin-btn.active {
 
 #loadingSection {
     position: fixed;
-    width: 45.1%;
-    height: 15%;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%); 
+    width: calc(100% - 40px);
+    max-width: 860px;
+    
     background: #fff;
-    z-index: 3;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    z-index: 5;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     transition: opacity 0.4s ease, visibility 0.4s ease;
-    opacity: 1;
-    visibility: visible;
-
-    margin-bottom: 30px; 
-    padding: 15px; 
-    border: 1px solid #ddd; 
     border-radius: 8px;
+    margin: 0;
+    text-align: center;
 }
 
 #loadingSection.hidden {
