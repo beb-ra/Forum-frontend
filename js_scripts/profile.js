@@ -175,7 +175,7 @@ if (userBans.length > 0) {
         } else {
             html += `<ul class="profile-list">`;
             userComments.forEach(c => {
-                html += `<li class="profile-list-item" style="cursor: pointer;" onclick="window.location.href='?post=${p.postId}'">
+                html += `<li class="profile-list-item" style="cursor: pointer;" onclick="window.location.href='?post=${c.postId}'">
                     <a class="profile-link" href="?post=${c.postId}">
                         ${escapeHtml(c.postTitle || 'Пост')}
                     </a>
