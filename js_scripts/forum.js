@@ -1520,23 +1520,27 @@ function switchAdminTab(tab) {
         document.querySelector('.admin-tabs button:nth-child(1)').classList.add('active');
         document.getElementById('adminTabUsers').style.display = 'block';
         loadAdminUsers();
-    } else if (tab === 'tags') {
-        document.querySelector('.admin-tabs button:nth-child(2)').classList.add('active');
-        document.getElementById('adminTabTags').style.display = 'block';
-        loadAdminTags();
-    } else if (tab === 'subforums') {
-        document.querySelector('.admin-tabs button:nth-child(3)').classList.add('active');
-        document.getElementById('adminTabSubforums').style.display = 'block';
-        loadAdminSubforums();
     } else if (tab === 'moderation') {
-        document.querySelector('.admin-tabs button:nth-child(4)').classList.add('active');
+        document.querySelector('.admin-tabs button:nth-child(2)').classList.add('active');
         document.getElementById('adminTabModeration').style.display = 'block';
         loadPendingModeration('adminPendingList');
     } else if (tab === 'bans') {
-        document.querySelector('.admin-tabs button:nth-child(5)').classList.add('active');
+        document.querySelector('.admin-tabs button:nth-child(3)').classList.add('active');
         document.getElementById('adminTabBans').style.display = 'block';
         loadBansList('adminBansList');
-    }
+    } else if (tab === 'deleted') {
+        document.querySelector('.admin-tabs button:nth-child(4)').classList.add('active');
+        document.getElementById('adminTabDeleted').style.display = 'block';
+        loadDeletedModeration('adminDeletedList');
+    } else if (tab === 'tags') {
+        document.querySelector('.admin-tabs button:nth-child(5)').classList.add('active');
+        document.getElementById('adminTabTags').style.display = 'block';
+        loadAdminTags();
+    } else if (tab === 'subforums') {
+        document.querySelector('.admin-tabs button:nth-child(6)').classList.add('active');
+        document.getElementById('adminTabSubforums').style.display = 'block';
+        loadAdminSubforums();
+    } 
 }
 
 // вкладка тэги
@@ -1792,7 +1796,7 @@ function switchModTab(tab) {
     document.querySelectorAll('#moderatorToolsModal .admin-tab-content').forEach(content => content.style.display = 'none');
 
     if (tab === 'users') {
-        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(2)').classList.add('active');
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(3)').classList.add('active');
         document.getElementById('modTabUsers').style.display = 'block';
         loadModeratorUsers();
     } else if (tab === 'pending') {
@@ -1800,9 +1804,13 @@ function switchModTab(tab) {
         document.getElementById('modTabPending').style.display = 'block';
         loadPendingModeration('modPendingList');
     } else if (tab === 'bans') {
-        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(3)').classList.add('active');
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(4)').classList.add('active');
         document.getElementById('modTabBans').style.display = 'block';
         loadBansList('modBansList');
+    } else if (tab === 'deleted') {
+        document.querySelector('#moderatorToolsModal .admin-tabs button:nth-child(2)').classList.add('active');
+        document.getElementById('modTabDeleted').style.display = 'block';
+        loadDeletedModeration('modDeletedList');
     }
 }
 
@@ -2110,4 +2118,109 @@ async function updateBanStatus() {
     } catch (e) {
         console.error('Ошибка загрузки', e);
     }
+}
+
+async function loadDeletedModeration(containerId) {
+    const list = document.getElementById(containerId);
+    list.innerHTML = '<li style="color:#888;">Загрузка...</li>';
+    const token = getToken();
+
+    try {
+        const res = await fetch(`${API_URL}/api/moderation/deleted`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error('Ошибка доступа');
+
+        const data = await res.json();
+        const { posts, comments } = data;
+
+        if (posts.length === 0 && comments.length === 0) {
+            list.innerHTML = '<li>Удаленных записей нет.</li>';
+            return;
+        }
+
+        const authorIds = [...posts.map(p => p.authorId), ...comments.map(c => c.authorId)];
+        await ensureUsernamesLoaded(authorIds);
+
+        list.innerHTML = '';
+        const btnStyle = 'flex: 1; margin: 0; padding: 8px 0; font-size: 13px; text-align: center; box-sizing: border-box;';
+
+        posts.forEach(p => {
+            const li = document.createElement('li');
+            li.style.flexDirection = 'column'; li.style.alignItems = 'flex-start';
+            li.style.padding = '15px'; li.style.background = '#fff'; li.style.marginBottom = '10px';
+            li.style.borderRadius = '6px'; li.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            const authorName = usersCache[p.authorId] || ('ID ' + p.authorId);
+
+            li.innerHTML = `
+                <div style="margin-bottom: 5px; font-size: 16px; color: #dc3545;">
+                    <strong>Пост:</strong> ${escapeHtml(p.title)}
+                </div>
+                <div style="margin-bottom: 5px; color: #333; font-size: 14px;">${escapeHtml(p.content)}</div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                    Автор: ${escapeHtml(authorName)} | Подфорум: ${escapeHtml(subforumName(p.subforumId))}
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="success" style="${btnStyle}" onclick="restoreModerationItem('posts', ${p.postId}, '${containerId}')">Восстановить</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+
+        comments.forEach(c => {
+            const li = document.createElement('li');
+            li.style.flexDirection = 'column'; li.style.alignItems = 'flex-start';
+            li.style.padding = '15px'; li.style.background = '#fff'; li.style.marginBottom = '10px';
+            li.style.borderRadius = '6px'; li.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            const authorName = usersCache[c.authorId] || ('ID ' + c.authorId);
+
+            li.innerHTML = `
+                <div style="margin-bottom: 5px; font-size: 14px; color: #dc3545;">
+                    <strong>Комментарий:</strong> ${escapeHtml(c.content || '')}
+                </div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 12px;">
+                    Автор: ${escapeHtml(authorName)} | Пост: ${escapeHtml(c.postTitle || 'Пост')}
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button class="success" style="${btnStyle}" onclick="restoreModerationItem('comments', ${c.commentId}, '${containerId}')">Восстановить</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+
+    } catch (e) {
+        list.innerHTML = `<li style="color:#dc3545;">Ошибка: ${e.message}</li>`;
+    }
+}
+
+function restoreModerationItem(type, id, containerId) {
+    const itemName = type === 'posts' ? 'пост' : 'комментарий';
+    
+    showConfirm(
+        `Вы действительно хотите восстановить ${itemName}?`,
+        async () => {
+            const token = getToken();
+            const url = `${API_URL}/api/moderation/${type}/${id}/restore`;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!res.ok) {
+                    showMessage('Ошибка: ' + res.status);
+                    return;
+                }
+                showMessage('Успешно восстановлено!', false);
+                loadDeletedModeration(containerId); // Обновляем список удаленных
+            } catch (e) {
+                showMessage('Ошибка: ' + e.message);
+            }
+        },
+        'Восстановление',
+        'Восстановить'
+    );
 }

@@ -419,7 +419,7 @@ html {
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.45);
-            z-index: 1000;
+            z-index: 3;
             align-items: center;
             justify-content: center;
         }
@@ -518,6 +518,61 @@ html {
             color: #888;
             margin-top: 4px;
         }
+
+	.adminToolsModalContent,
+	.moderatorToolsModalContent {
+    	    max-width: 700px;
+	    background: #fff;
+            border-radius: 10px;
+            padding: 20px 25px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+	    overflow-x: hidden;
+	}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.close-cross-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.close-cross-btn:hover {
+    color: #dc3545;
+    background: none;
+}
+
+
+	.admin-tabs {
+    		flex-wrap: wrap;
+	}
+
+	.admin-list li {
+    		word-break: break-word;
+	}
+
 
 	.role-checkboxes {
     	max-height: 200px;
@@ -828,10 +883,6 @@ button.pin-btn.active {
 .btn-gray-icon:hover {
     background: #e0e0e0;
     color: #333;
-}
-
-.admin-tools-btn:hover {
-    background: #d0e6ff;
 }
 
 .admin-tools-btn:hover {
