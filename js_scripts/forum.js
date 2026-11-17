@@ -445,6 +445,12 @@ function renderPosts() {
     posts.forEach(p => {
         const div = document.createElement('div');
         div.className = 'post' + (p.isPinned ? ' pinned' : '');
+	div.style.cursor = 'pointer';
+
+	div.onclick = (e) => {
+            if (e.target.closest('a') || e.target.closest('button')) return;
+            window.location.href = `?post=${p.postId}`;
+        };
 
         const author = usersCache[p.authorId] || ('Пользователь ' + p.authorId);
         const tag = p.tagId != null ? tagName(p.tagId) : null;

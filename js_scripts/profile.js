@@ -91,7 +91,7 @@ async function showProfilePage(profileId) {
             }
         } catch (_) { }
 
-        const userBans = await loadUserBans(profileId);
+const userBans = await loadUserBans(profileId);
 
 if (userBans.length > 0) {
     const now = new Date();
@@ -154,7 +154,7 @@ if (userBans.length > 0) {
         } else {
             html += `<ul class="profile-list">`;
             userPosts.forEach(p => {
-                html += `<li class="profile-list-item">
+                html += `<li class="profile-list-item" style="cursor: pointer;" onclick="window.location.href='?post=${p.postId}'">
                     <a class="profile-link" href="?post=${p.postId}">
                         ${escapeHtml(p.title)}
                     </a>
