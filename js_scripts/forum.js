@@ -2356,3 +2356,22 @@ document.addEventListener('click', (e) => {
 setInterval(() => {
     if (getToken()) loadNotifications();
 }, 30000); // запрос раз в 30 секунд
+
+async function pingActivity() {
+    const token = getToken();
+    if (!token) return;
+    try {
+        await fetch(`${API_URL}/api/users/me/activity`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+    } catch (e) { }
+}
+
+setInterval(() => {
+    if (getToken()) pingActivity();
+}, 60000);
+
+if (getToken()) {
+    pingActivity();
+}

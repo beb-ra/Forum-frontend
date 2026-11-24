@@ -53,6 +53,7 @@ async function showProfilePage(profileId) {
                     <div class="profile-row" style="margin: 0;"><strong>ID:</strong> ${escapeHtml(String(u.userId ?? '—'))}</div>
                     <div class="profile-row" style="margin: 0;"><strong>Имя:</strong> ${escapeHtml(u.username ?? '—')}</div>
                     <div class="profile-row" style="margin: 0;"><strong>Дата регистрации:</strong> ${escapeHtml(formatDate(u.registrationDate) || '—')}</div>
+                    <div class="profile-row" style="margin: 0;"><strong>Последний заход:</strong> ${formatLastActivity(u.lastActivity)}</div>
                 </div>
             </div>
             ${u.description ? `<div class="profile-row"><strong>О себе:</strong> ${escapeHtml(u.description)}</div>` : ''}

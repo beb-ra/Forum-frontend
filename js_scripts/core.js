@@ -279,3 +279,19 @@ function closeAdminToolsModal() {
             loading.classList.add('hidden');
         }
     }
+
+function formatLastActivity(dateStr) {
+    if (!dateStr) return '—';
+
+    const utcStr = dateStr.endsWith('Z') || dateStr.includes('+') ? dateStr : dateStr + 'Z';
+    const lastUtcTime = new Date(utcStr).getTime();
+    if (isNaN(lastUtcTime)) return '—';
+
+    const diffMinutes = (Date.now() - lastUtcTime) / (1000 * 60);
+
+    if (diffMinutes < 5) {
+        return '<span style="color: #28a745; font-weight: bold;">● Онлайн</span>';
+    }
+
+    return escapeHtml(formatDate(dateStr) || '—');
+}
