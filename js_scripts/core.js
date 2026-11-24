@@ -1,76 +1,74 @@
 const API_URL = 'https://forum-6sgl.onrender.com';
 
-        // состояние
-        let subforums = [];
-        let posts = [];
-        let currentSubforumId = null;
-        let usersCache = {};
-        let tagsCache = {};
-        let tagsLoaded = false;
-        let currentPostId = null;
-        let currentPostCanModerate = false;
-        let currentPost = null;
-        let currentComments = [];
-        let votes = [];
-	let currentPostsPage = 1;
-	let totalPostsPages = 1;
-	const postsPerPage = 10;
-	let currentCommentsPage = 1;
-	let totalCommentsPages = 1;
-	const commentsPerPage = 10;
-	let currentCommentsList = [];
-        let pendingConfirmAction = null;
-        let rolesList = [];
-        let currentRolesProfileId = null;
-        let currentBanProfileId = null;
-	let currentPostImages = [];
-	let currentCommentImage = null;
-	let isShowingMyPosts = false;
-	let currentSearchQuery = '';
-	let tempAvatarUrl = null;
-	let currentTagId = null;
-	let loadingTimeout;
-	let notifications = [];
+let subforums = [];
+let posts = [];
+let currentSubforumId = null;
+let usersCache = {};
+let tagsCache = {};
+let tagsLoaded = false;
+let currentPostId = null;
+let currentPostCanModerate = false;
+let currentPost = null;
+let currentComments = [];
+let votes = [];
+let currentPostsPage = 1;
+let totalPostsPages = 1;
+const postsPerPage = 10;
+let currentCommentsPage = 1;
+let totalCommentsPages = 1;
+const commentsPerPage = 10;
+let currentCommentsList = [];
+let pendingConfirmAction = null;
+let rolesList = [];
+let currentRolesProfileId = null;
+let currentBanProfileId = null;
+let currentPostImages = [];
+let currentCommentImage = null;
+let isShowingMyPosts = false;
+let currentSearchQuery = '';
+let tempAvatarUrl = null;
+let currentTagId = null;
+let loadingTimeout;
+let notifications = [];
 
-        // утилиты
-        function showMessage(text, isError = true) {
-            const el = document.getElementById('message');
-            el.className = isError ? 'error' : 'success';
-            el.textContent = text;
-            setTimeout(() => { el.textContent = ''; }, 4000);
-        }
+function showMessage(text, isError = true) {
+    const el = document.getElementById('message');
+    el.className = isError ? 'error' : 'success';
+    el.textContent = text;
+    setTimeout(() => { el.textContent = ''; }, 4000);
+}
 
-        function getToken() { return localStorage.getItem('token'); }
-        function setToken(token) { localStorage.setItem('token', token); }
-        function clearToken() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
-            localStorage.removeItem('userId');
-        }
+function getToken() { return localStorage.getItem('token'); }
+function setToken(token) { localStorage.setItem('token', token); }
+function clearToken() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+}
 
-        function getCurrentUserId() {
-            const v = localStorage.getItem('userId');
-            return v != null ? parseInt(v, 10) : null;
-        }
+function getCurrentUserId() {
+    const v = localStorage.getItem('userId');
+    return v != null ? parseInt(v, 10) : null;
+}
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text == null ? '' : text;
-            return div.innerHTML;
-        }
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : text;
+    return div.innerHTML;
+}
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const d = new Date(dateStr);
-            if (isNaN(d)) return '';
-            return d.toLocaleString('ru-RU');
-        }
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d)) return '';
+    return d.toLocaleString('ru-RU');
+}
 
-        function truncate(text, max = 120) {
-            if (text == null) return '';
-            const s = String(text);
-            return s.length > max ? s.slice(0, max) + '…' : s;
-        }
+function truncate(text, max = 120) {
+    if (text == null) return '';
+    const s = String(text);
+    return s.length > max ? s.slice(0, max) + '…' : s;
+}
 
 async function withBtnLock(button, func) {
     if (!button) return await func();
@@ -85,200 +83,196 @@ async function withBtnLock(button, func) {
     }
 }
 
-        // JWT и роли
-        function parseJwt(token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const json = decodeURIComponent(
-                    atob(base64).split('').map(c =>
-                        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-                    ).join('')
-                );
-                return JSON.parse(json);
-            } catch (e) {
-                return null;
-            }
-        }
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const json = decodeURIComponent(
+            atob(base64).split('').map(c =>
+                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            ).join('')
+        );
+        return JSON.parse(json);
+    } catch (e) {
+        return null;
+    }
+}
 
-        function getSubforumRoles() {
-            const token = getToken();
-            if (!token) return [];
-            const payload = parseJwt(token);
-            if (!payload) return [];
+function getSubforumRoles() {
+    const token = getToken();
+    if (!token) return [];
+    const payload = parseJwt(token);
+    if (!payload) return [];
 
-            let roles = payload['SubforumRole'];
-            if (!roles) return [];
-            if (typeof roles === 'string') roles = [roles];
-            return roles;
-        }
+    let roles = payload['SubforumRole'];
+    if (!roles) return [];
+    if (typeof roles === 'string') roles = [roles];
+    return roles;
+}
 
-        function isGlobalAdmin() {
-            return getSubforumRoles().includes('global:Admin');
-        }
+function isGlobalAdmin() {
+    return getSubforumRoles().includes('global:Admin');
+}
 
-        function canModerateSubforum(subforumId) {
-            if (subforumId == null) return false;
-            const roles = getSubforumRoles();
-            if (roles.includes('global:Admin')) return true;
-            return roles.includes(subforumId + ':Moderator');
-        }
+function canModerateSubforum(subforumId) {
+    if (subforumId == null) return false;
+    const roles = getSubforumRoles();
+    if (roles.includes('global:Admin')) return true;
+    return roles.includes(subforumId + ':Moderator');
+}
 
-        function getModeratedSubforumIds() {
-            return getSubforumRoles()
-                .filter(r => r.endsWith(':Moderator'))
-                .map(r => parseInt(r.split(':')[0], 10))
-                .filter(id => !isNaN(id));
-        }
+function getModeratedSubforumIds() {
+    return getSubforumRoles()
+        .filter(r => r.endsWith(':Moderator'))
+        .map(r => parseInt(r.split(':')[0], 10))
+        .filter(id => !isNaN(id));
+}
 
-        function renderRoleBadges() {
-            const el = document.getElementById('roleBadges');
-            if (!el) return;
-            const roles = getSubforumRoles();
-            if (roles.includes('global:Admin')) {
-                el.innerHTML = '<span class="inline-badge">Администратор</span>';
-                return;
-            }
-            const moderatorOf = getModeratedSubforumIds();
-            if (moderatorOf.length > 0) {
-                const names = moderatorOf.map(id => subforumName(id) || ('#' + id));
-                el.innerHTML = '<span class="inline-badge">Модератор: ' +
-                    escapeHtml(names.join(', ')) + '</span>';
-            } else {
-                el.innerHTML = '';
-            }
-        }
+function renderRoleBadges() {
+    const el = document.getElementById('roleBadges');
+    if (!el) return;
+    const roles = getSubforumRoles();
+    if (roles.includes('global:Admin')) {
+        el.innerHTML = '<span class="inline-badge">Администратор</span>';
+        return;
+    }
+    const moderatorOf = getModeratedSubforumIds();
+    if (moderatorOf.length > 0) {
+        const names = moderatorOf.map(id => subforumName(id) || ('#' + id));
+        el.innerHTML = '<span class="inline-badge">Модератор: ' +
+            escapeHtml(names.join(', ')) + '</span>';
+    } else {
+        el.innerHTML = '';
+    }
+}
 
-        // навигация
-        function openOwnProfile() {
-            const id = getCurrentUserId();
-            if (id == null) {
-                showMessage('Войдите, чтобы открыть профиль');
-                return;
-            }
-            window.location.href = '?profile=' + id;
-        }
+function openOwnProfile() {
+    const id = getCurrentUserId();
+    if (id == null) {
+        showMessage('Войдите, чтобы открыть профиль');
+        return;
+    }
+    window.location.href = '?profile=' + id;
+}
 
-        function goBackToForum() {
-            if (window.history.length > 1) {
-        	window.history.back();
-    	    } else {
-        	window.location.href = window.location.pathname;
-    	    }
-        }
+function goBackToForum() {
+    if (document.referrer && document.referrer.includes(window.location.host) && !document.referrer.includes('profile=')) {
+        window.history.back();
+    } else {
+        window.location.href = window.location.pathname;
+    }
+}
 
-        // UI
-        function showLogin() {
-            hideAllSections();
-            document.getElementById('loginSection').className = 'section';
-	const topbarRight = document.getElementById('topbarRight');
-	const topbarCenter = document.getElementById('topbarCenter');
-	if (topbarRight) topbarRight.style.display = 'none';
-	if (topbarCenter) topbarCenter.style.display = 'none';
-        }
-
-        function showRegister() {
-            hideAllSections();
-            document.getElementById('registerSection').className = 'section';
-	const topbarRight = document.getElementById('topbarRight');
+function showLogin() {
+    hideAllSections();
+    document.getElementById('loginSection').className = 'section';
+    const topbarRight = document.getElementById('topbarRight');
     const topbarCenter = document.getElementById('topbarCenter');
     if (topbarRight) topbarRight.style.display = 'none';
     if (topbarCenter) topbarCenter.style.display = 'none';
-        }
+}
 
-        async function showApp() {
-	    hideAllSections();
-            document.getElementById('appSection').className = 'section';
-	const topbarRight = document.getElementById('topbarRight');
+function showRegister() {
+    hideAllSections();
+    document.getElementById('registerSection').className = 'section';
+    const topbarRight = document.getElementById('topbarRight');
+    const topbarCenter = document.getElementById('topbarCenter');
+    if (topbarRight) topbarRight.style.display = 'none';
+    if (topbarCenter) topbarCenter.style.display = 'none';
+}
+
+async function showApp() {
+    hideAllSections();
+    document.getElementById('appSection').className = 'section';
+    const topbarRight = document.getElementById('topbarRight');
     const topbarCenter = document.getElementById('topbarCenter');
     if (topbarRight) topbarRight.style.display = 'flex';
     if (topbarCenter) topbarCenter.style.display = 'flex';
-            document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
+    document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
 
-	    document.getElementById('adminToolsBtn').style.display = isGlobalAdmin() ? 'block' : 'none';
+    document.getElementById('adminToolsBtn').style.display = isGlobalAdmin() ? 'block' : 'none';
 
-	    const isMod = getModeratedSubforumIds().length > 0;
-	    document.getElementById('moderatorToolsBtn').style.display = (isMod && !isGlobalAdmin()) ? 'inline-flex' : 'none';
+    const isMod = getModeratedSubforumIds().length > 0;
+    document.getElementById('moderatorToolsBtn').style.display = (isMod && !isGlobalAdmin()) ? 'inline-flex' : 'none';
 
-	    await updateBanStatus();
-            await ensureTagsLoaded();
-            await loadSubforums();
-            await loadVotes();
-            renderRoleBadges();
-	    updateNavUI();
-            await loadPosts();
-	    loadNotifications();
+    await updateBanStatus();
+    await ensureTagsLoaded();
+    await loadSubforums();
+    await loadVotes();
+    renderRoleBadges();
+    updateNavUI();
+    await loadPosts();
+    loadNotifications();
 
-            document.getElementById('appSection').className = 'section';
-	}
+    document.getElementById('appSection').className = 'section';
+}
 
-        function showPostDetailSection() {
-            hideAllSections();
-            document.getElementById('postDetailSection').className = 'section';
-        }
+function showPostDetailSection() {
+    hideAllSections();
+    document.getElementById('postDetailSection').className = 'section';
+}
 
-        function showProfileSection() {
-            hideAllSections();
-            document.getElementById('profileSection').className = 'section';
-        }
+function showProfileSection() {
+    hideAllSections();
+    document.getElementById('profileSection').className = 'section';
+}
 
-        function toggleCreatePostForm() {
-            const form = document.getElementById('createPostForm');
-            const arrow = document.getElementById('createPostArrow');
-            if (form.style.display === 'none') {
-                form.style.display = 'block';
-                arrow.textContent = '▲';
-            } else {
-                form.style.display = 'none';
-                arrow.textContent = '▼';
-            }
-        }
+function toggleCreatePostForm() {
+    const form = document.getElementById('createPostForm');
+    const arrow = document.getElementById('createPostArrow');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        arrow.textContent = '▲';
+    } else {
+        form.style.display = 'none';
+        arrow.textContent = '▼';
+    }
+}
 
-        // универсальное подтверждение
-        function showConfirm(message, onConfirm, title = 'Подтверждение', yesText = 'Удалить') {
-            document.getElementById('confirmTitle').textContent = title;
-            document.getElementById('confirmMessage').textContent = message;
-            document.getElementById('confirmYesBtn').textContent = yesText;
-	    const yesBtn = document.getElementById('confirmYesBtn');
-    	    yesBtn.disabled = false;
-    	    delete yesBtn.dataset.busy;
-            pendingConfirmAction = onConfirm;
-            document.getElementById('confirmModal').classList.add('open');
-        }
+function showConfirm(message, onConfirm, title = 'Подтверждение', yesText = 'Удалить') {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmYesBtn').textContent = yesText;
+    const yesBtn = document.getElementById('confirmYesBtn');
+    yesBtn.disabled = false;
+    delete yesBtn.dataset.busy;
+    pendingConfirmAction = onConfirm;
+    document.getElementById('confirmModal').classList.add('open');
+}
 
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.remove('open');
-            pendingConfirmAction = null;
-        }
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('open');
+    pendingConfirmAction = null;
+}
 
-        async function confirmYes() {
-            const action = pendingConfirmAction;
-            closeConfirmModal();
-            if (typeof action === 'function') {
-                await action();
-            }
-        }
+async function confirmYes() {
+    const action = pendingConfirmAction;
+    closeConfirmModal();
+    if (typeof action === 'function') {
+        await action();
+    }
+}
 
-	function openAdminToolsModal() {
+function openAdminToolsModal() {
     if (!isGlobalAdmin()) return;
     document.getElementById('adminToolsModal').classList.add('open');
-    switchAdminTab('users'); // По умолчанию открываем вкладку пользователей
+    switchAdminTab('users');
 }
 
 function closeAdminToolsModal() {
     document.getElementById('adminToolsModal').classList.remove('open');
 }
 
-	function hideAllSections() {
+function hideAllSections() {
     ['loginSection', 'registerSection', 'appSection',
      'postDetailSection', 'profileSection']
         .forEach(id => document.getElementById(id).className = 'section hidden');
 
-	const loading = document.getElementById('loadingSection');
-        if (loading) {
-            loading.classList.add('hidden');
-        }
+    const loading = document.getElementById('loadingSection');
+    if (loading) {
+        loading.classList.add('hidden');
     }
+}
 
 function formatLastActivity(dateStr) {
     if (!dateStr) return '—';
@@ -290,7 +284,7 @@ function formatLastActivity(dateStr) {
     const diffMinutes = (Date.now() - lastUtcTime) / (1000 * 60);
 
     if (diffMinutes < 5) {
-        return '<span style="color: #28a745; font-weight: bold;">● Онлайн</span>';
+        return '<span style="color: #10b981; font-weight: 700;">● Онлайн</span>';
     }
 
     return escapeHtml(formatDate(dateStr) || '—');
