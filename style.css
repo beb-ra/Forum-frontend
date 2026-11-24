@@ -87,22 +87,101 @@ html {
     width: 150px;
     box-shadow: none;
 }
-        .profile-btn {
-            background: #e7f3ff;
-            border: 1px solid #b6d8ff;
-            color: #0056b3;
-            border-radius: 50%;
-            width: 42px; height: 42px;
-            padding: 0;
-            font-size: 22px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-	    justify-self: end;
-        }
-        .profile-btn:hover { background: #d0e6ff; }
+
+.profile-btn {
+    background: #e7f3ff;
+    border: 1px solid #b6d8ff;
+    color: #0056b3;
+    border-radius: 50%;
+    width: 42px; 
+    height: 42px;
+    padding: 0;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-btn:hover { background: #d0e6ff; }
+
+.topbar-right {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-self: end;
+}
+
+.bell-btn {
+    position: relative;
+}
+
+.notif-badge {
+    display: none;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.notif-container {
+    position: relative;
+}
+
+.notif-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px;
+    width: 320px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.notif-dropdown.open {
+    display: block;
+}
+
+.notif-header {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notif-mark-read {
+    background: none;
+    border: none;
+    color: #007bff;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.notif-mark-read:hover {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.notif-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
 
         h1 { color: #333; }
         h2 { color: #555; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 18px; }
@@ -1013,6 +1092,16 @@ button.pin-btn.active {
     height: 50px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     transition: background-color 0.3s, transform 0.3s;
+}
+
+.notif-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.notif-link:hover {
+    text-decoration: underline;
 }
 
 #backToTopBtn:hover {

@@ -2071,6 +2071,8 @@ function updateUserInfoHeader() {
     
     const adminBtn = document.getElementById('adminToolsBtn');
     if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+
+    loadNotifications();
 }
 
 async function updateBanStatus() {
@@ -2224,3 +2226,133 @@ function restoreModerationItem(type, id, containerId) {
         'Восстановить'
     );
 }
+
+async function loadNotifications() {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/notifications`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+
+        notifications = await res.json();
+        
+        const senderIds = notifications.map(n => n.senderId).filter(id => id != null);
+        await ensureUsernamesLoaded(senderIds);
+        
+        renderNotifications();
+    } catch (e) { }
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notifList');
+    const badge = document.getElementById('notifBadge');
+    
+    if (!list || !badge) return;
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<li style="padding: 15px; text-align: center; color: #888;">Уведомлений нет</li>';
+        return;
+    }
+
+    list.innerHTML = '';
+    notifications.forEach(n => {
+        const li = document.createElement('li');
+        li.style.padding = '10px';
+        li.style.borderBottom = '1px solid #eee';
+        li.style.cursor = 'pointer';
+        li.style.background = n.isRead ? '#fff' : '#f0f8ff';
+        
+        li.onclick = () => {
+            if (!n.isRead) markNotificationRead(n.id);
+        };
+
+        let senderHtml = '';
+        if (n.senderId) {
+            const senderName = usersCache[n.senderId] || 'Пользователь';
+            senderHtml = `<a href="?profile=${n.senderId}" class="author-link" onclick="event.stopPropagation()">${escapeHtml(senderName)}</a> `;
+        }
+
+        let msgHtml = escapeHtml(n.message);
+
+        if (n.postId) {
+            msgHtml = msgHtml.replace(
+                'на ваш комментарий', 
+                `на ваш <a href="?post=${n.postId}" class="notif-link" onclick="event.stopPropagation()">комментарий</a>`
+            );
+            
+            msgHtml = msgHtml.replace(
+                'под вашим постом', 
+                `под вашим <a href="?post=${n.postId}" class="notif-link" onclick="event.stopPropagation()">постом</a>`
+            );
+        }
+
+        li.innerHTML = `
+            <div style="font-size: 13px; color: #333;">
+                ${senderHtml}${msgHtml}
+            </div>
+            <div style="font-size: 11px; color: #888; margin-top: 4px;">${formatDate(n.creationDate)}</div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notifDropdown');
+    dropdown.classList.toggle('open');
+    
+    if (dropdown.classList.contains('open')) {
+        loadNotifications();
+    }
+}
+
+async function markNotificationRead(id) {
+    const token = getToken();
+    if (!token) return;
+    try {
+        await fetch(`${API_URL}/api/notifications/${id}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const n = notifications.find(x => x.id === id);
+        if (n) n.isRead = true;
+        renderNotifications();
+    } catch (e) { }
+}
+
+async function markAllNotificationsRead() {
+    const token = getToken();
+    if (!token) return;
+    try {
+        await fetch(`${API_URL}/api/notifications/read-all`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        notifications.forEach(n => n.isRead = true);
+        renderNotifications();
+    } catch (e) { }
+}
+
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('notifDropdown');
+    const btn = document.getElementById('notifBellBtn');
+
+    if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.remove('open');
+    }
+});
+
+setInterval(() => {
+    if (getToken()) loadNotifications();
+}, 30000); // запрос раз в 30 секунд

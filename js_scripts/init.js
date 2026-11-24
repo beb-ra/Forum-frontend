@@ -28,7 +28,9 @@ document.addEventListener('keydown', e => {
             });
             if (res.status === 401 || res.status === 404) {
                 clearToken();
-            }
+            } else {
+		loadNotifications();
+	    }
         } catch (e) {
             console.warn("Сервер недоступен, проверка токена пропущена");
         }

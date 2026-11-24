@@ -30,6 +30,7 @@ const API_URL = 'https://forum-6sgl.onrender.com';
 	let tempAvatarUrl = null;
 	let currentTagId = null;
 	let loadingTimeout;
+	let notifications = [];
 
         // утилиты
         function showMessage(text, isError = true) {
@@ -193,6 +194,7 @@ async function withBtnLock(button, func) {
             renderRoleBadges();
 	    updateNavUI();
             await loadPosts();
+	    loadNotifications();
 
             hideAllSections();
             document.getElementById('appSection').className = 'section';

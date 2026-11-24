@@ -68,6 +68,7 @@ async function showProfilePage(profileId) {
             <button class="small-btn" onclick="openPasswordModal()">Изменить</button>
         </div>
     `;
+    loadNotifications(); 
 }
 
         // Посты и комментарии пользователя

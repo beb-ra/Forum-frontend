@@ -19,7 +19,25 @@
         </div>
     </div>
 
+    <div class="topbar-right">
+    <div class="notif-container">
+        <button id="notifBellBtn" class="profile-btn bell-btn" title="Уведомления" onclick="toggleNotifications()">
+            🔔
+            <span id="notifBadge" class="notif-badge">0</span>
+        </button>
+        
+        <div id="notifDropdown" class="notif-dropdown">
+            <div class="notif-header">
+                <strong>Уведомления</strong>
+                <button class="notif-mark-read" onclick="markAllNotificationsRead()">Прочитать все</button>
+            </div>
+            <ul id="notifList" class="notif-list">
+            </ul>
+        </div>
+    </div>
+
     <button class="profile-btn" title="Профиль" onclick="openOwnProfile()">👤</button>
+</div>
     </header>
 
     <div id="message"></div>
