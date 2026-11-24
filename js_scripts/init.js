@@ -130,3 +130,5 @@ document.addEventListener('keydown', function (e) {
         }
     }
 });
+
+attachCharCounter(document.getElementById('newCommentContent'), 1000);

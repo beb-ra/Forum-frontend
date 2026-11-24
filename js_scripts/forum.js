@@ -466,7 +466,7 @@ function renderPosts() {
                     ${escapeHtml(p.title)}
                 </a>
             </h3>
-            <p>${escapeHtml(p.content)}</p>
+            <p>${renderExpandableText(p.content, 1000)}</p>
             ${imagesHtml}
             <div class="post-meta">
                 Автор:
@@ -518,6 +518,15 @@ async function createPost(btn) {
     }
     if (!title || !content) {
         showMessage('Заполните заголовок и текст');
+        return;
+    }
+
+    if (title.length > 255) {
+        showMessage('Заголовок не должен превышать 255 символов');
+        return;
+    }
+    if (content.length > 10000) {
+        showMessage('Текст поста не должен превышать 10000 символов');
         return;
     }
 
@@ -710,6 +719,8 @@ function startEditPost() {
 
     renderEditPostImagesPreview();
     updateAttachButtons();
+    attachCharCounter(document.getElementById('editPostTitle'), 255);
+    attachCharCounter(document.getElementById('editPostContent'), 10000);
 }
 
 async function handleEditPostImageUpload(event) {
@@ -771,6 +782,15 @@ async function saveEditedPost(btn) {
             showMessage('Заполните заголовок и текст');
             return;
         }
+
+	if (title.length > 255) {
+    		showMessage('Заголовок не должен превышать 255 символов');
+    		return;
+	}
+	if (content.length > 10000) {
+    		showMessage('Текст поста не должен превышать 10000 символов');
+    		return;
+	}
 
         try {
             const res = await fetch(`${API_URL}/api/posts/${currentPostId}`, {
@@ -918,7 +938,7 @@ function createCommentElement(node, isReply = false) {
             ${editBtn}
             ${delBtn}
         </div>
-        <div>${node.content ? escapeHtml(node.content) : ''}</div>
+        <div class="comment-body">${node.content ? renderExpandableText(node.content, 500) : ''}</div>
         ${commentImageHtml}
         <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
             <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
@@ -1038,7 +1058,10 @@ function startReply(commentId) {
     if (!form) return;
     form.style.display = 'block';
     const ta = document.getElementById('reply-text-' + commentId);
-    if (ta) ta.focus();
+    if (ta) {
+	attachCharCounter(ta, 1000);
+        ta.focus();
+    }
 }
 
 function cancelReply(commentId) {
@@ -1063,6 +1086,11 @@ async function submitReply(parentCommentId, btn) {
     if (!pid || isNaN(pid)) {
         showMessage('Не удалось определить пост');
         return;
+    }
+
+    if (content.length > 1000) {
+       showMessage('Комментарий не должен превышать 1000 символов');
+       return;
     }
 
     try {
@@ -1135,6 +1163,9 @@ function startEditComment(commentId) {
         </div>
     `;
     document.getElementById('editCommentText-' + commentId).value = c.content || '';
+    const editTa = document.getElementById('editCommentText-' + commentId);
+editTa.value = c.content || '';
+    attachCharCounter(editTa, 1000);
 }
 
 async function handleEditCommentImageUpload(event, commentId) {
@@ -1170,6 +1201,11 @@ async function saveEditedComment(commentId, btn) {
     if (!content && !currentCommentImage) { 
         showMessage('Введите текст или прикрепите картинку'); 
         return; 
+    }
+
+    if (content.length > 1000) {
+       showMessage('Комментарий не должен превышать 1000 символов');
+       return;
     }
 
     try {
@@ -1238,6 +1274,11 @@ async function submitComment(btn) {
         return;
     }
 
+    if (content.length > 1000) {
+       showMessage('Комментарий не должен превышать 1000 символов');
+       return;
+    }
+
     try {
         const res = await fetch(`${API_URL}/api/comments`, {
             method: 'POST',
@@ -1270,6 +1311,7 @@ async function submitComment(btn) {
         }
 
         contentEl.value = '';
+	attachCharCounter(contentEl, 1000);
 	currentCommentImage = null;
 	const cPreview = document.getElementById('commentImagePreview');
 	if (cPreview) cPreview.innerHTML = '';
@@ -1743,6 +1785,9 @@ function openCreatePostModal() {
     currentPostImages = [];
     renderPostImagesPreview();
     updateAttachButtons();
+
+    attachCharCounter(document.getElementById('postTitle'), 255);
+    attachCharCounter(document.getElementById('postContent'), 10000);
     
     document.getElementById('createPostModal').classList.add('open');
 }

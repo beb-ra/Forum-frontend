@@ -289,3 +289,62 @@ function formatLastActivity(dateStr) {
 
     return escapeHtml(formatDate(dateStr) || '—');
 }
+
+
+function renderExpandableText(text, limit) {
+    const str = text == null ? '' : String(text);
+    if (str.length <= limit) {
+        return escapeHtml(str);
+    }
+    const shortPart = escapeHtml(str.slice(0, limit)) + '…';
+    const fullPart = escapeHtml(str);
+    return `<span class="expandable-short">${shortPart}</span>` +
+           `<span class="expandable-full" style="display: none;">${fullPart}</span>` +
+           `<button type="button" class="read-more-btn" onclick="toggleExpandText(this, event)">Далее...</button>`;
+}
+
+function toggleExpandText(btn, event) {
+    if (event) event.stopPropagation();
+    const parent = btn.parentElement;
+    const shortEl = parent.querySelector('.expandable-short');
+    const fullEl = parent.querySelector('.expandable-full');
+    if (!shortEl || !fullEl) return;
+
+    const isExpanded = fullEl.style.display !== 'none';
+    if (isExpanded) {
+        fullEl.style.display = 'none';
+        shortEl.style.display = 'inline';
+        btn.textContent = 'Далее...';
+    } else {
+        shortEl.style.display = 'none';
+        fullEl.style.display = 'inline';
+        btn.textContent = 'Свернуть';
+    }
+}
+
+function attachCharCounter(el, maxLen) {
+    if (!el) return;
+    el.maxLength = maxLen;
+    if (el.value.length > maxLen) {
+        el.value = el.value.slice(0, maxLen);
+    }
+
+    let counter = el.nextElementSibling;
+    if (!counter || !counter.classList.contains('char-counter')) {
+        counter = document.createElement('div');
+        counter.className = 'char-counter';
+        el.insertAdjacentElement('afterend', counter);
+    }
+
+    const update = () => {
+        const len = el.value.length;
+        counter.textContent = `${len} / ${maxLen}`;
+        counter.classList.toggle('limit-reached', len >= maxLen);
+    };
+
+    if (!el.dataset.hasCharCounter) {
+        el.addEventListener('input', update);
+        el.dataset.hasCharCounter = '1';
+    }
+    update();
+}
