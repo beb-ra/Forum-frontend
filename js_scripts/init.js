@@ -111,3 +111,22 @@ document.getElementById('globalSearchInput').addEventListener('input', function 
         triggerSearch();
     }
 });
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        const target = e.target;
+
+        if (target && target.id === 'newCommentContent') {
+            e.preventDefault();
+            const submitBtn = document.querySelector('#commentFormContainer button.success');
+            submitComment(submitBtn);
+        }
+
+        if (target && target.id && target.id.startsWith('reply-text-')) {
+            e.preventDefault();
+            const commentId = parseInt(target.id.replace('reply-text-', ''), 10);
+            const submitBtn = document.querySelector(`#reply-form-${commentId} button.success`);
+            submitReply(commentId, submitBtn);
+        }
+    }
+});
