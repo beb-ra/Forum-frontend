@@ -171,15 +171,28 @@ async function withBtnLock(button, func) {
         function showLogin() {
             hideAllSections();
             document.getElementById('loginSection').className = 'section';
+	const topbarRight = document.getElementById('topbarRight');
+	const topbarCenter = document.getElementById('topbarCenter');
+	if (topbarRight) topbarRight.style.display = 'none';
+	if (topbarCenter) topbarCenter.style.display = 'none';
         }
 
         function showRegister() {
             hideAllSections();
             document.getElementById('registerSection').className = 'section';
+	const topbarRight = document.getElementById('topbarRight');
+    const topbarCenter = document.getElementById('topbarCenter');
+    if (topbarRight) topbarRight.style.display = 'none';
+    if (topbarCenter) topbarCenter.style.display = 'none';
         }
 
         async function showApp() {
+	    hideAllSections();
             document.getElementById('appSection').className = 'section';
+	const topbarRight = document.getElementById('topbarRight');
+    const topbarCenter = document.getElementById('topbarCenter');
+    if (topbarRight) topbarRight.style.display = 'flex';
+    if (topbarCenter) topbarCenter.style.display = 'flex';
             document.getElementById('currentUser').textContent = localStorage.getItem('username') || '—';
 
 	    document.getElementById('adminToolsBtn').style.display = isGlobalAdmin() ? 'block' : 'none';
@@ -196,9 +209,8 @@ async function withBtnLock(button, func) {
             await loadPosts();
 	    loadNotifications();
 
-            hideAllSections();
             document.getElementById('appSection').className = 'section';
-        }
+	}
 
         function showPostDetailSection() {
             hideAllSections();
