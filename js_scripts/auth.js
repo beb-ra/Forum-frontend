@@ -10,7 +10,7 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                if (!res.ok) { showMessage('Ошибка входа: ' + res.status); return; }
+                if (!res.ok) { showMessage(await parseApiError(res, 'Ошибка входа')); return; }
 
                 const data = await res.json();
                 setToken(data.token);
@@ -51,7 +51,7 @@
                     body: JSON.stringify({ username, email, password })
                 });
 
-                if (!res.ok) { showMessage('Ошибка регистрации: ' + res.status); return; }
+                if (!res.ok) { showMessage(await parseApiError(res, 'Ошибка регистрации')); return; }
 
                 const data = await res.json();
                 setToken(data.token);

@@ -31,11 +31,96 @@ let currentTagId = null;
 let loadingTimeout;
 let notifications = [];
 
+function ensureAlertModal() {
+    let overlay = document.getElementById('alertModal');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'alertModal';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal alert-modal-box">
+            <h2 id="alertModalTitle" class="alert-modal-title is-error">Сообщение</h2>
+            <p id="alertModalText" class="alert-modal-text"></p>
+            <div class="alert-modal-actions">
+                <button type="button" id="alertModalOkBtn" onclick="closeAlertModal()">ОК</button>
+            </div>
+        </div>
+    `;
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeAlertModal();
+    });
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function closeAlertModal() {
+    const overlay = document.getElementById('alertModal');
+    if (overlay) overlay.classList.remove('open');
+}
+
 function showMessage(text, isError = true) {
-    const el = document.getElementById('message');
-    el.className = isError ? 'error' : 'success';
-    el.textContent = text;
-    setTimeout(() => { el.textContent = ''; }, 4000);
+    const overlay = ensureAlertModal();
+    const titleEl = document.getElementById('alertModalTitle');
+    const textEl = document.getElementById('alertModalText');
+    const okBtn = document.getElementById('alertModalOkBtn');
+
+    if (isError) {
+        titleEl.textContent = 'Ошибка';
+        titleEl.className = 'alert-modal-title is-error';
+        okBtn.className = 'danger';
+    } else {
+        titleEl.textContent = 'Сообщение';
+        titleEl.className = 'alert-modal-title is-success';
+        okBtn.className = 'success';
+    }
+
+    textEl.textContent = text || (isError ? 'Произошла неизвестная ошибка' : 'Операция выполнена');
+    overlay.classList.add('open');
+    setTimeout(() => okBtn.focus(), 30);
+}
+
+async function parseApiError(res, fallbackPrefix = 'Ошибка') {
+    let rawText = '';
+    try {
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json') || ct.includes('application/problem+json')) {
+            const data = await res.json();
+            if (typeof data === 'string') {
+                rawText = data;
+            } else if (data.errors) {
+                rawText = Object.values(data.errors).flat().join('; ');
+            } else {
+                rawText = data.detail || data.message || data.title || '';
+            }
+        } else {
+            rawText = await res.text();
+        }
+    } catch (_) { }
+
+    const clean = (rawText || '').replace(/^"|"$/g, '').trim();
+
+    const standardTitles = [
+        'bad request',
+        'unauthorized',
+        'forbidden',
+        'not found',
+        'conflict',
+        'one or more validation errors occurred.'
+    ];
+
+    if (clean && !standardTitles.includes(clean.toLowerCase())) {
+        return clean;
+    }
+
+    if (res.status === 401) return 'Сессия истекла или вы не авторизованы. Войдите снова';
+    if (res.status === 403) return 'У вас нет прав для выполнения этого действия';
+    if (res.status === 404) return 'Запрашиваемый объект не найден';
+    if (res.status === 409) return 'Такая запись уже существует';
+    if (res.status === 429) return 'Слишком много запросов. Пожалуйста, подождите немного';
+    if (res.status >= 500) return 'Ошибка сервера. Попробуйте позже';
+
+    return `${fallbackPrefix} (код ${res.status})`;
 }
 
 function getToken() { return localStorage.getItem('token'); }

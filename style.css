@@ -1636,3 +1636,43 @@ button.pin-btn.active {
 .comment-body {
     white-space: pre-wrap;
 }
+
+#alertModal {
+    z-index: 3000;
+}
+
+.alert-modal-box {
+    max-width: 420px;
+    text-align: center;
+}
+
+.alert-modal-title {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    border: none;
+    padding: 0;
+}
+
+.alert-modal-title.is-error {
+    color: var(--danger);
+}
+
+.alert-modal-title.is-success {
+    color: var(--success-hover);
+}
+
+.alert-modal-text {
+    color: var(--text-main);
+    font-size: 14.5px;
+    margin-bottom: 20px;
+    word-break: break-word;
+}
+
+.alert-modal-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.alert-modal-actions button {
+    min-width: 120px;
+}

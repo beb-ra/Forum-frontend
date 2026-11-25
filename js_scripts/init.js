@@ -1,13 +1,18 @@
 // Закрытие модалок по Esc
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
+        const alertModal = document.getElementById('alertModal');
+        if (alertModal && alertModal.classList.contains('open')) {
+            closeAlertModal();
+            return;
+        }
         closeConfirmModal();
         closeRolesModal();
         closeBanModal();
-	closeEmailModal();
+        closeEmailModal();
         closePasswordModal();
-	closeAdminToolsModal();
-	closeModeratorToolsModal();
+        closeAdminToolsModal();
+        closeModeratorToolsModal();
     }
 });
 

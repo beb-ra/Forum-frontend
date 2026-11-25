@@ -213,7 +213,7 @@ if (userBans.length > 0) {
             }
         }
     } catch (e) {
-        content.innerHTML = `<p class="error">Ошибка: ${escapeHtml(e.message)}</p>`;
+        content.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`;
     }
 }
 
@@ -256,7 +256,7 @@ async function deleteOwnAccount(uid) {
             window.location.href = window.location.pathname;
         }, 800);
     } catch (e) {
-        showMessage('Ошибка: ' + e.message);
+        showMessage(e.message);
     }
 }
 
@@ -464,7 +464,7 @@ async function saveUserRoles(btn) {
                 return;
             }
         } catch (e) {
-            showMessage('Ошибка: ' + e.message);
+            showMessage(e.message);
             return;
         }
     }
@@ -593,7 +593,7 @@ async function saveBan(btn) {
     if (currentBanProfileId == null) return;
 
     const reason = document.getElementById('banReason').value.trim();
-    if (!reason) { showMessage('Укажите причину бана'); return; }
+    if (!reason) { showMessage('Укажите причину бана', false); return; }
 
     const durationDays = document.getElementById('banDuration').value;
     let expiresDate = null;
@@ -697,7 +697,7 @@ async function saveBan(btn) {
             }
         }
     } catch (e) {
-        showMessage('Ошибка: ' + e.message);
+        showMessage(e.message);
     }
 });
 }
@@ -763,7 +763,7 @@ async function executeUnban(banId, btn, onSuccess) {
 
             if (onSuccess) await onSuccess();
         } catch (e) {
-            showMessage('Ошибка: ' + e.message);
+            showMessage(e.message);
         }
     });
 }
@@ -820,10 +820,10 @@ async function saveEmail(btn) {
             showMessage(text || 'Неверный пароль');
         } else {
             const text = await res.text();
-            showMessage(`Ошибка: ${text || res.status}`);
+            showMessage(`${text || res.status}`);
         }
     } catch (e) {
-        showMessage('Ошибка: ' + e.message);
+        showMessage(e.message);
     }
 });
 }
@@ -867,7 +867,7 @@ async function savePassword(btn) {
             closePasswordModal();
         } else {
             const text = await res.text();
-            showMessage(`Ошибка: ${text || res.status}`);
+            showMessage(`${text || res.status}`);
         }
     } catch (e) {
         showMessage('Ошибка сети: ' + e.message);
