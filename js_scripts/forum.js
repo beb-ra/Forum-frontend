@@ -447,7 +447,7 @@ function renderPosts() {
                 ${p.isClosed ? '🔒' : ''}
                 <a class="post-title-link" href="?post=${p.postId}">${escapeHtml(p.title)}</a>
             </div>
-            <div class="post-content">${escapeHtml(p.content)}</div>
+            <div class="post-content">${renderExpandableText(p.content, 1000)}</div>
             ${imagesHtml}
             <div class="post-meta">
                 Автор: <a class="author-link" href="?profile=${p.authorId}">${escapeHtml(author)}</a>
@@ -577,7 +577,7 @@ async function showPostDetail(postId) {
                 ${tag ? `| Тег: ${escapeHtml(tag)}` : ''}
             </div>
             ${renderVoteControls('post', p.postId, p.rating ?? 0)}
-            <div class="post-content">${escapeHtml(p.content)}</div>
+            <div class="post-content">${renderExpandableText(p.content, 1000)}</div>
             ${imagesHtml}
         `;
 
@@ -831,7 +831,7 @@ function createCommentElement(node, isReply = false) {
             ${editBtn}
             ${delBtn}
         </div>
-        <div>${node.content ? escapeHtml(node.content) : ''}</div>
+        <div class="comment-body">${node.content ? renderExpandableText(node.content, 500) : ''}</div>
         ${commentImageHtml}
         <div id="reply-form-${node.commentId}" class="reply-form" style="display: none;">
             <textarea id="reply-text-${node.commentId}" rows="2" placeholder="Ваш ответ..."></textarea>
