@@ -25,6 +25,7 @@ document.addEventListener('keydown', e => {
     const myPostsParam = params.get('my-posts');
     const searchParam = params.get('search');
     const tagParam = params.get('tag');
+    const usersParam = params.get('users');
 
     if (getToken()) {
         try {
@@ -54,10 +55,13 @@ document.addEventListener('keydown', e => {
         showPostDetail(postId);
         return;
     }
-    
-    if (myPostsParam) {
-        isShowingMyPosts = true;
+
+    if (usersParam) {
+    	isShowingUsers = true;
+    } else if (myPostsParam) {
+    	isShowingMyPosts = true;
     }
+    
     if (subforumParam) {
         currentSubforumId = parseInt(subforumParam, 10);
     }

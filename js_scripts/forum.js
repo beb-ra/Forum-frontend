@@ -1307,11 +1307,12 @@ async function loadAdminUsers() {
     list.innerHTML = 'Загрузка...';
     const token = getToken();
     try {
-        const res = await fetch(`${API_URL}/api/users`, {
+        const res = await fetch(`${API_URL}/api/users/all`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) throw new Error('Ошибка доступа');
-        const users = await res.json();
+        const data = await res.json();
+        const users = data.items || data;
         if (users.length === 0) {
             list.innerHTML = 'Пользователей нет';
             return;
@@ -1468,17 +1469,24 @@ async function deleteTag(id) {
 
 function updateNavUI() {
     const myPostsNav = document.getElementById('navMyPosts');
-    if (isShowingMyPosts) {
-        myPostsNav.classList.add('active');
-    } else {
-        myPostsNav.classList.remove('active');
-    }
+    const usersNav = document.getElementById('navUsers');
+    const postsView = document.getElementById('postsView');
+    const usersView = document.getElementById('usersView');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (myPostsNav) myPostsNav.classList.toggle('active', isShowingMyPosts);
+    if (usersNav) usersNav.classList.toggle('active', isShowingUsers);
+
+    if (postsView) postsView.style.display = isShowingUsers ? 'none' : 'block';
+    if (usersView) usersView.style.display = isShowingUsers ? 'block' : 'none';
+    if (sidebar) sidebar.style.display = isShowingUsers ? 'none' : 'block';
 }
 
 function goToMainPage(e) {
     if (e) e.preventDefault();
     window.history.pushState({}, '', window.location.pathname);
     isShowingMyPosts = false;
+    isShowingUsers = false;
     currentSubforumId = null;
     currentTagId = null;
     currentPostsPage = 1;
@@ -1499,6 +1507,7 @@ function goToMyPosts(e) {
     }
     window.history.pushState({}, '', '?my-posts=1');
     isShowingMyPosts = true;
+    isShowingUsers = false;
     currentSubforumId = null;
     currentTagId = null;
     currentPostsPage = 1;
@@ -1511,9 +1520,35 @@ function goToMyPosts(e) {
     loadPosts();
 }
 
+function goToUsers(e) {
+    if (e) e.preventDefault();
+    window.history.pushState({}, '', '?users=1');
+    isShowingUsers = true;
+    isShowingMyPosts = false;
+    currentSubforumId = null;
+    currentTagId = null;
+    currentUsersPage = 1;
+    updateNavUI();
+    hideAllSections();
+    document.getElementById('appSection').className = 'section';
+    updateUserInfoHeader();
+    loadUsersList();
+}
+
 function triggerSearch() {
     const input = document.getElementById('globalSearchInput');
     currentSearchQuery = input.value.trim();
+
+    if (isShowingUsers) {
+        currentUsersPage = 1;
+        const params = new URLSearchParams();
+        params.set('users', '1');
+        if (currentSearchQuery) params.set('search', currentSearchQuery);
+        window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+        loadUsersList();
+        return;
+    }
+
     currentPostsPage = 1;
     currentTagId = null;
 
@@ -2133,4 +2168,81 @@ setInterval(() => {
 
 if (getToken()) {
     pingActivity();
+}
+
+async function loadUsersList() {
+    const token = getToken();
+    try {
+        let url = `${API_URL}/api/users?page=${currentUsersPage}&pageSize=${usersPerPage}`;
+        if (currentSearchQuery) {
+            url += `&search=${encodeURIComponent(currentSearchQuery)}`;
+        }
+
+        const res = await fetch(url, {
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        });
+
+        if (!res.ok) {
+            showMessage(await parseApiError(res, 'Не удалось загрузить пользователей'));
+            return;
+        }
+
+        const data = await res.json();
+        usersList = data.items || [];
+        totalUsersPages = Math.ceil(data.totalCount / usersPerPage) || 1;
+        renderUsersList();
+    } catch (e) {
+        showMessage('Ошибка загрузки пользователей: ' + e.message);
+    }
+}
+
+function renderUsersList() {
+    const container = document.getElementById('usersList');
+    const label = document.getElementById('usersFilterLabel');
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (label) {
+        label.textContent = currentSearchQuery ? `(поиск: "${currentSearchQuery}")` : '';
+    }
+
+    if (usersList.length === 0) {
+        container.innerHTML = 'Пользователей не найдено.';
+        return;
+    }
+
+    usersList.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'user-card';
+        div.onclick = (e) => {
+            if (e.target.closest('a')) return;
+            window.location.href = `?profile=${u.userId}`;
+        };
+
+        div.innerHTML = `
+            <img src="${getAvatarUrl(u)}" alt="" class="user-card-avatar">
+            <div class="user-card-info">
+                <a class="user-card-name" href="?profile=${u.userId}">${escapeHtml(u.username)}</a>
+                <span class="user-card-id">ID: ${u.userId}</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    if (totalUsersPages > 1) {
+        const pag = document.createElement('div');
+        pag.className = 'pagination';
+        pag.innerHTML = `
+            <button ${currentUsersPage === 1 ? 'disabled' : ''} onclick="changeUsersPage(-1)">← Назад</button>
+            <span>Страница ${currentUsersPage} из ${totalUsersPages}</span>
+            <button ${currentUsersPage === totalUsersPages ? 'disabled' : ''} onclick="changeUsersPage(1)">Вперед →</button>
+        `;
+        container.appendChild(pag);
+    }
+}
+
+function changeUsersPage(delta) {
+    currentUsersPage += delta;
+    loadUsersList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }

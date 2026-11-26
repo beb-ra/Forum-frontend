@@ -11,6 +11,7 @@
     
     <div class="topbar-center" id="topbarCenter">
         <nav class="topbar-nav">
+	    <a href="?users=1" id="navUsers" class="nav-link" onclick="goToUsers(event)">Пользователи</a>
             <a href="?my-posts=1" class="nav-link" id="navMyPosts" onclick="goToMyPosts(event)">Мои посты</a>
         </nav>
         <div class="topbar-search">
@@ -87,13 +88,23 @@
             </aside>
 
 	<main class="content">
-    		<div class="posts-header">
-    		<h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
-    		<div style="display: flex; column-gap: 10px; align-items: center;">
-        		<button class="success" onclick="openCreatePostModal()">Создать пост</button>
-        		<button class="btn-gray-icon" onclick="loadPosts()" title="Обновить список">↻</button>
+    		<div id="postsView">
+        		<div class="posts-header">
+            			<h2>Посты <span id="postsFilterLabel" class="filter-label"></span></h2>
+            			<div style="display: flex; column-gap: 10px; align-items: center;">
+                			<button class="success" onclick="openCreatePostModal()">Создать пост</button>
+                			<button class="btn-gray-icon" onclick="loadPosts()" title="Обновить список">↻</button>
+            			</div>
+        		</div>
+        		<div id="postsList"></div>
+        		<div id="pagination" class="pagination"></div>
     		</div>
-    	</div>
+		<div id="usersView" style="display: none;">
+    			<div class="posts-header">
+        			<h2>Пользователи <span id="usersFilterLabel" class="filter-label"></span></h2>
+    			</div>
+    		<div id="usersList"></div>
+		</div>
     	<div id="postsList"></div>
     	<div id="pagination" class="pagination"></div>
 	</main>

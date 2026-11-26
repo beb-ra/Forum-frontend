@@ -30,6 +30,11 @@ let tempAvatarUrl = null;
 let currentTagId = null;
 let loadingTimeout;
 let notifications = [];
+let isShowingUsers = false;
+let usersList = [];
+let currentUsersPage = 1;
+let totalUsersPages = 1;
+const usersPerPage = 10;
 
 function ensureAlertModal() {
     let overlay = document.getElementById('alertModal');
@@ -286,8 +291,12 @@ async function showApp() {
     await loadVotes();
     renderRoleBadges();
     updateNavUI();
-    await loadPosts();
     loadNotifications();
+    if (isShowingUsers) {
+        await loadUsersList();
+    } else {
+        await loadPosts();
+    }
 
     document.getElementById('appSection').className = 'section';
 }
